@@ -21,6 +21,7 @@ int yRes = 200;
 
 // the field being drawn and manipulated
 FIELD_2D field(xRes, yRes);
+FIELD_2D field_a(xRes, yRes);
 FIELD_2D field_b(xRes, yRes);
 
 // the resolution of the OpenGL window -- independent of the field resolution
@@ -518,84 +519,88 @@ void zeroBoundary(FIELD_2D &field_)
 void runForGS(float d_a, float d_b, float dt, float f, float k)
 {
   // initialize time step field
-  FIELD_2D field_step(xRes, yRes);
+  FIELD_2D field_step_a(xRes, yRes);
   FIELD_2D field_step_b(xRes, yRes);
   FIELD_2D field_tmp(xRes, yRes);
   FIELD_2D laplacian(xRes, yRes);
   float dx;
 
   // set d_a and d_b properly
-  //dx = 4.0 / xRes;
   dx = 2.0 / xRes;
   d_a = d_a / dx / dx;
   d_b = d_b / dx / dx;
 
-  //for (int y = 0.45 * yRes; y < 0.55 * yRes; y++) {
-    //for (int x = 0.45 * xRes; x < 0.55 * xRes; x++) {
-      //field_b(x,y) += 1.0;
-    //}
-  //}
-
   // react chemicals
-  field_tmp = field;
+  field_tmp = field_a;
   field_tmp *= field_b;
   field_tmp *= field_b;
 
-  fieldUnstable(field_tmp, "field_tmp");
-
-  field_step = 1.0;
-  field_step -= field;
-  field_step *= f;
-  field_step -= field_tmp;
-
-  fieldUnstable(field_step, "field_step");
+  field_step_a = 1.0;
+  field_step_a -= field_a;
+  field_step_a *= f;
+  field_step_a -= field_tmp;
 
   field_step_b = field_b;
   field_step_b *= -(f + k);
   field_step_b += field_tmp;
 
-  fieldUnstable(field_step_b, "field_step_b");
-
   // zero the boundaries
-  zeroBoundary(field);
+  zeroBoundary(field_a);
   zeroBoundary(field_b);
 
   // compute laplacian
-  computeLaplacian(field, laplacian);
-  field_step += d_a * laplacian;
-  field += dt * field_step;
+  computeLaplacian(field_a, laplacian);
+  field_step_a += d_a * laplacian;
+  field_a += dt * field_step_a;
 
   computeLaplacian(field_b, laplacian);
   field_step_b += d_b * laplacian;
   field_b += dt * field_step_b;
 
-
-  fieldUnstable(field_b, "field_b");
-  fieldUnstable(field, "field");
-
   // zero the boundaries
-  zeroBoundary(field);
+  zeroBoundary(field_a);
   zeroBoundary(field_b);
 }
 
 void runForFHN(float d_a, float d_b, float dt, float alpha, float beta, float epsilon)
 {
   // initialize time step field
-  FIELD_2D field_step(xRes, yRes);
+  FIELD_2D field_step_a(xRes, yRes);
+  FIELD_2D field_step_b(xRes, yRes);
+  FIELD_2D field_tmp(xRes, yRes);
+  FIELD_2D laplacian(xRes, yRes);
+  float dx;
 
   // add initial condition
   for (int y = 0.45 * yRes; y < 0.55 * yRes; y++) {
     for (int x = 0.45 * xRes; x < 0.55 * xRes; x++) {
-      field(x,y) += 1.0;
+      field_a(x,y) += 1.0;
       field_b(x,y) += alpha / 2;
     }
   }
 
+  // set d_a and d_b properly
+  dx = 165.0 / xRes;
+  d_a = d_a / dx / dx;
+  d_b = d_b / dx / dx;
+
   // react chemicals
 
+  // zero the boundaries
+  zeroBoundary(field_a);
+  zeroBoundary(field_b);
+
+  // compute laplacian
+  computeLaplacian(field_a, laplacian);
+  field_step_a += d_a * laplacian;
+  field_a += dt * field_step_a;
+
+  computeLaplacian(field_b, laplacian);
+  field_step_b += d_b * laplacian;
+  field_b += dt * field_step_b;
 
   // zero the boundaries
-  zeroBoundary(field);
+  zeroBoundary(field_a);
   zeroBoundary(field_b);
 }
 
@@ -609,37 +614,33 @@ void runEverytime()
 
   if (counter == 0) {
     cout << "Is it unstable to begin with?" << endl;
-    fieldUnstable(field, "field");
+    fieldUnstable(field_a, "field");
     fieldUnstable(field_b, "field_b");
     cout << "Now starting simulation." << endl;
   }
 
-  // add initial condition
-  if (counter % 1 == 0) {
-    for (int y = 0.45 * yRes; y < 0.55 * yRes; y++) {
-      for (int x = 0.45 * xRes; x < 0.55 * xRes; x++) {
-        field_b(x,y) += 1.0;
-      }
-    }
-  }
-
-  if (!fieldUnstable(field, "if field") && !fieldUnstable(field_b, "if field_b")) {
+  if (!fieldUnstable(field_a, "if field") && !fieldUnstable(field_b, "if field_b")) {
   //if (counter < 3 && !fieldUnstable(field, "if field") && !fieldUnstable(field_b, "if field_b")) {
     if (fhn) {
       for (int iters = 0; iters < 10; iters++)
         runForFHN();
     } else {
+    // add initial condition
+    if (counter % 1 == 0) {
+      for (int y = 0.45 * yRes; y < 0.55 * yRes; y++) {
+        for (int x = 0.45 * xRes; x < 0.55 * xRes; x++) {
+          field_b(x,y) += 1.0;
+        }
+      }
+    }
       for (int iters = 0; iters < 100; iters++) {
         runForGS();
       }
+      field = field_b;
     }
   }
 
-    //field.normalize();
-    //field_b.normalize();
-
   counter++;
-
 }
 
 ///////////////////////////////////////////////////////////////////////
@@ -653,7 +654,7 @@ void runOnce()
   //// let's insert gray everywhere
   //for (int y = 0; y < yRes; y++)
     //for (int x = 0; x < xRes; x++)
-      //field(x,y) = 0.25;
+      //field_a(x,y) = 0.25;
 
   //// let's insert gray everywhere
   //for (int y = 0; y < yRes; y++)
@@ -666,8 +667,8 @@ void runOnce()
       fy = (float) y;
       x_ = fx / xRes * 2 - 1.0;
       y_ = fy / yRes * 2 - 1.0;
-      //field(x,y) = 1 - exp(-80 * (pow(x_ + 0.05, 2) + pow(y_ + 0.05, 2)));
-      field(x,y) = 0.0;
+      //field_a(x,y) = 1 - exp(-80 * (pow(x_ + 0.05, 2) + pow(y_ + 0.05, 2)));
+      field_a(x,y) = 0.0;
     }
   }
 
@@ -682,16 +683,7 @@ void runOnce()
     }
   }
 
-  //// add initial condition
-  //for (int y = 0.45 * yRes; y < 0.55 * yRes; y++) {
-    //for (int x = 0.45 * xRes; x < 0.55 * xRes; x++) {
-      //field_b(x,y) += 1.0;
-    //}
-  //}
-
   // zero the boundaries
-  zeroBoundary(field);
+  zeroBoundary(field_a);
   zeroBoundary(field_b);
-  //field.normalize();
-  //field_b.normalize();
 }

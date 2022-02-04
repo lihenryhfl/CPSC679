@@ -1,6 +1,5 @@
 #include "FIELD_2D.h"
 #include <cassert>
-#include <cmath>
 
 ///////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////
@@ -162,17 +161,6 @@ void FIELD_2D::normalize()
 
 ///////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////
-bool FIELD_2D::isnan()
-{
-  bool nan_bool = false;
-  for (int x = 0; x < _totalCells; x++)
-    nan_bool = nan_bool || std::isnan(_data[x]);
-
-  return nan_bool;
-}
-
-///////////////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////////////
 FIELD_2D &FIELD_2D::abs()
 {
   for (int x = 0; x < _totalCells; x++)
@@ -288,7 +276,8 @@ FIELD_2D &FIELD_2D::operator/=(const FIELD_2D &input)
     if (fabs(input[x]) > 1e-6)
       _data[x] /= input[x];
     else
-      _data[x] = 0;
+      //_data[x] = 0;
+      _data[x] /= 1e-6;
 
   return *this;
 }
@@ -299,15 +288,6 @@ FIELD_2D operator*(const FIELD_2D &A, const float alpha)
 {
   FIELD_2D final(A);
   final *= alpha;
-  return final;
-}
-
-///////////////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////////////
-FIELD_2D operator*(const FIELD_2D &A, const FIELD_2D &B)
-{
-  FIELD_2D final(A);
-  final *= B;
   return final;
 }
 
@@ -335,25 +315,6 @@ FIELD_2D operator-(const FIELD_2D &A, const FIELD_2D &B)
 {
   FIELD_2D final(A);
   final -= B;
-  return final;
-}
-
-///////////////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////////////
-FIELD_2D operator-(const FIELD_2D &A, const float alpha)
-{
-  FIELD_2D final(A);
-  final += -alpha;
-  return final;
-}
-
-///////////////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////////////
-FIELD_2D operator-(const float alpha, const FIELD_2D &B)
-{
-  FIELD_2D final(B);
-  final *= -1;
-  final += alpha;
   return final;
 }
 
@@ -453,7 +414,6 @@ void FIELD_2D::argmax(int *coords)
   assert(_yRes > 0);
   float final = _data[0];
   int i_max = 0;
-  int coords[2];
 
   for (int i = 0; i < _xRes * _yRes; i++) {
     if (_data[i] > final) {
@@ -464,6 +424,18 @@ void FIELD_2D::argmax(int *coords)
 
   coords[0] = i_max % _xRes;
   coords[1] = i_max / _xRes;
+}
+
+///////////////////////////////////////////////////////////////////////
+// Return true if there are any nans in the field
+///////////////////////////////////////////////////////////////////////
+bool FIELD_2D::isnan()
+{
+  bool nan_bool = false;
+  for (int x = 0; x < _totalCells; x++)
+    nan_bool = nan_bool || std::isnan(_data[x]);
+
+  return nan_bool;
 }
 
 ///////////////////////////////////////////////////////////////////////

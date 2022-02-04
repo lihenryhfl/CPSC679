@@ -71,8 +71,8 @@ void runEverytime();
 // forward declare the method-specific timestepping function
 void runForGS(float d_a = 2e-4, float d_b = 1e-5, float dt = 0.1, float f = 0.05, float k = 0.0675);
 //void runForGS(float d_a = 2e-5, float d_b = 1e-5, float dt = 0.1, float f = 0.04, float k = 0.06);
-//void runForFHN(float d_a = 0.75, float d_b = 0.0, float dt = 0.02, float alpha = 0.75, float beta = 0.01, float epsilon = 0.02);
 void runForFHN(float d_a = 0.75, float d_b = 0.0, float dt = 0.02, float alpha = 0.75, float beta = 0.01, float epsilon = 0.02);
+//void runForFHN(float d_a = 0.75, float d_b = 0.0, float dt = 0.02, float alpha = 0.75, float beta = 0.01, float epsilon = 0.02);
 
 ///////////////////////////////////////////////////////////////////////
 // Figure out which field element is being pointed at, set xField and
@@ -322,6 +322,18 @@ void glutKeyboard(unsigned char key, int x, int y)
   }
 }
 
+void mouseRemoveChemical(int xMouse, int yMouse) {
+  int xmin = max(xMouse - 5, 0);
+  int xmax = min(xMouse + 5, xRes);
+  int ymin = max(yMouse - 5, 0);
+  int ymax = min(yMouse + 5, yRes);
+  for (int y = ymin; y < ymax; y++) {
+    for (int x = xmin; x < xmax; x++) {
+      field_b(x,y) = 0.0;
+    }
+  }
+}
+
 ///////////////////////////////////////////////////////////////////////
 // Do something if the mouse is clicked
 ///////////////////////////////////////////////////////////////////////
@@ -337,7 +349,8 @@ void glutMouseClick(int button, int state, int x, int y)
     refreshMouseFieldIndex(x, y);
 
     // set the cell
-    field(xField, yField) = 1;
+    //field(xField, yField) = 1;
+    mouseRemoveChemical(xField, yField);
 
     // make sure nothing else is called
     return;
@@ -357,7 +370,8 @@ void glutMouseMotion(int x, int y)
     refreshMouseFieldIndex(x, y);
 
     // set the cell
-    field(xField, yField) = 1;
+    //field(xField, yField) = 1;
+    mouseRemoveChemical(xField, yField);
 
     // make sure nothing else is called
     return;
@@ -368,6 +382,7 @@ void glutMouseMotion(int x, int y)
   float speed = 0.001;
 
   if (mouseButton == GLUT_LEFT_BUTTON) {
+    refreshMouseFieldIndex(x, y);
     eyeCenter[0] -= xDiff * speed;
     eyeCenter[1] += yDiff * speed;
   }
@@ -477,9 +492,11 @@ int main(int argc, char **argv)
 
 bool fieldUnstable(FIELD_2D &field, string printstr="") {
   float max_val = field.max();
+  int max_coords[2];
+  field.argmax(max_coords);
   bool nan_bool = field.isnan();
   if (max_val > 1e3) {
-    cout << "Over stability threshold for field " << printstr << " ! max_val = " << max_val << endl;
+    cout << "Over stability threshold for field " << printstr << " ! max_val = " << max_val << ", at " << max_coords[0] << ", " << max_coords[1] << endl;
     return true;
   } else if (nan_bool) {
     cout << "NaNs in field " << printstr <<"!" << endl;
@@ -487,22 +504,6 @@ bool fieldUnstable(FIELD_2D &field, string printstr="") {
   } else {
     return false;
   }
-}
-
-FIELD_2D &computeLaplacian(const FIELD_2D &field_, FIELD_2D &laplacian)
-{
-  // compute convolution
-  for (int y = 1; y < yRes - 1; y++) {
-    for (int x = 1; x < xRes - 1; x++) {
-      laplacian(x,y) = -4 * field_(x,y);
-      laplacian(x,y) += field_(x-1,y);
-      laplacian(x,y) += field_(x+1,y);
-      laplacian(x,y) += field_(x,y-1);
-      laplacian(x,y) += field_(x,y+1);
-    }
-  }
-
-  return laplacian;
 }
 
 void zeroBoundary(FIELD_2D &field_)
@@ -517,12 +518,32 @@ void zeroBoundary(FIELD_2D &field_)
       field_(x,yRes - 1) = 0.0;
   }
 }
+
+FIELD_2D &computeLaplacian(const FIELD_2D &field_, FIELD_2D &laplacian)
+{
+  FIELD_2D field(field_);
+  zeroBoundary(field);
+  // compute convolution
+  for (int y = 1; y < yRes - 1; y++) {
+    for (int x = 1; x < xRes - 1; x++) {
+      laplacian(x,y) = -4;
+      laplacian(x,y) *= field(x,y);
+      laplacian(x,y) += field(x-1,y);
+      laplacian(x,y) += field(x+1,y);
+      laplacian(x,y) += field(x,y-1);
+      laplacian(x,y) += field(x,y+1);
+    }
+  }
+
+  return laplacian;
+}
+
 void runForGS(float d_a, float d_b, float dt, float f, float k)
 {
   // initialize time step field
   FIELD_2D field_step_a(xRes, yRes);
   FIELD_2D field_step_b(xRes, yRes);
-  FIELD_2D field_tmp(xRes, yRes);
+  FIELD_2D tmp(xRes, yRes);
   FIELD_2D laplacian(xRes, yRes);
   float dx;
 
@@ -531,31 +552,41 @@ void runForGS(float d_a, float d_b, float dt, float f, float k)
   d_a = d_a / dx / dx;
   d_b = d_b / dx / dx;
 
+  // set initial conditions
+  for (int y = 0.45 * yRes; y < 0.55 * yRes; y++) {
+    for (int x = 0.45 * xRes; x < 0.55 * xRes; x++) {
+      //field_b(x,y) += 1.0;
+      field_b(x,y) = 1.0;
+    }
+  }
+
   // react chemicals
-  field_tmp = field_a;
-  field_tmp *= field_b;
-  field_tmp *= field_b;
+  tmp = field_a;
+  tmp *= field_b;
+  tmp *= field_b;
 
-  field_step_a = f * (1.0 - field_a) - field_tmp;
+  field_step_a = 1.0;
+  field_step_a -= field_a;
+  field_step_a *= f;
+  field_step_a -= tmp;
 
-  field_step_b = (-(f + k)) * field_b + field_tmp;
-
-  // zero the boundaries
-  zeroBoundary(field_a);
-  zeroBoundary(field_b);
+  field_step_b = (-(f + k));
+  field_step_b *= field_b;
+  field_step_b += tmp;
 
   // compute laplacian
   computeLaplacian(field_a, laplacian);
-  field_step_a += d_a * laplacian;
-  field_a += dt * field_step_a;
+  laplacian *= d_a;
+  field_step_a += laplacian;
+  field_step_a *= dt;
+  field_a += field_step_a;
 
   computeLaplacian(field_b, laplacian);
-  field_step_b += d_b * laplacian;
-  field_b += dt * field_step_b;
+  laplacian *= d_b;
+  field_step_b += laplacian;
+  field_step_b *= dt;
+  field_b += field_step_b;
 
-  // zero the boundaries
-  zeroBoundary(field_a);
-  zeroBoundary(field_b);
 }
 
 void runForFHN(float d_a, float d_b, float dt, float alpha, float beta, float epsilon)
@@ -563,35 +594,60 @@ void runForFHN(float d_a, float d_b, float dt, float alpha, float beta, float ep
   // initialize time step field
   FIELD_2D field_step_a(xRes, yRes);
   FIELD_2D field_step_b(xRes, yRes);
+  FIELD_2D tmp(xRes, yRes);
   FIELD_2D laplacian(xRes, yRes);
-  float dx;
+  float dx, dx2;
 
   // set d_a and d_b properly
   dx = 165.0 / xRes;
-  d_a = d_a / dx / dx;
-  d_b = d_b / dx / dx;
+  dx2 = dx * dx;
+  d_a = d_a / dx2;
+  d_b = d_b / dx2;
+
+  // set initial condition
+  for (int y = 0.45 * yRes; y < 0.55 * yRes; y++) {
+    for (int x = 0.45 * xRes; x < 0.55 * xRes; x++) {
+      field_a(x,y) = 1.0;
+      field_b(x,y) = 0.75 / 2.0;
+    }
+  }
 
   // react chemicals
-  field_step_a = (1.0 / epsilon) * field_a * (1.0 - field_a) * (field_a - ((field_b + beta) / alpha));
 
-  field_step_b = field_a - field_b;
+  // compute (field_a - ((field_b + beta) / alpha))
+  tmp = beta;
+  tmp += field_b;
+  tmp /= alpha;
+  field_step_a = field_a;
+  field_step_a -= tmp;
 
-  // zero the boundaries
-  zeroBoundary(field_a);
-  zeroBoundary(field_b);
+  // multiply by (1.0 - field_a)
+  tmp = 1.0;
+  tmp -= field_a;
+  field_step_a *= tmp;
+
+  // multiply by field_a
+  field_step_a *= field_a;
+
+  // multiply by 1.0 / epsilon
+  field_step_a *= (1.0 / epsilon);
+
+  field_step_b = field_a;
+  field_step_b -= field_b;
 
   // compute laplacian
   computeLaplacian(field_a, laplacian);
-  field_step_a += d_a * laplacian;
-  field_a += dt * field_step_a;
+  laplacian *= d_a;
+  field_step_a += laplacian;
+  field_step_a *= dt;
+  field_a += field_step_a;
 
   computeLaplacian(field_b, laplacian);
-  field_step_b += d_b * laplacian;
-  field_b += dt * field_step_b;
+  laplacian *= d_b;
+  field_step_b += laplacian;
+  field_step_b *= dt;
+  field_b += field_step_b;
 
-  // zero the boundaries
-  zeroBoundary(field_a);
-  zeroBoundary(field_b);
 }
 
 ///////////////////////////////////////////////////////////////////////
@@ -602,41 +658,17 @@ void runEverytime()
 {
   static int counter = 0;
 
-  if (counter == 0) {
-    cout << "Is it unstable to begin with?" << endl;
-    fieldUnstable(field_a, "field");
-    fieldUnstable(field_b, "field_b");
-    cout << "Now starting simulation." << endl;
-  }
-
-  if (!fieldUnstable(field_a, "if field") && !fieldUnstable(field_b, "if field_b")) {
-  //if (counter < 3 && !fieldUnstable(field, "if field") && !fieldUnstable(field_b, "if field_b")) {
-    if (fhn) {
-      // add initial condition
-      for (int y = 0.45 * yRes; y < 0.55 * yRes; y++) {
-        for (int x = 0.45 * xRes; x < 0.55 * xRes; x++) {
-          field_a(x,y) += 1.0;
-          field_b(x,y) += 0.75 / 2.0;
-        }
-      }
-
-      for (int iters = 0; iters < 10; iters++) {
-        runForFHN();
-      }
-    } else {
+  if (fhn) {
+    for (int iters = 0; iters < 10; iters++) {
+      runForFHN();
+    }
+    field = field_b;
+  } else {
     // add initial condition
-    if (counter % 1 == 0) {
-      for (int y = 0.45 * yRes; y < 0.55 * yRes; y++) {
-        for (int x = 0.45 * xRes; x < 0.55 * xRes; x++) {
-          field_b(x,y) += 1.0;
-        }
-      }
+    for (int iters = 0; iters < 100; iters++) {
+      runForGS();
     }
-      for (int iters = 0; iters < 100; iters++) {
-        runForGS();
-      }
-      field = field_b;
-    }
+    field = field_b;
   }
 
   counter++;
@@ -648,41 +680,5 @@ void runEverytime()
 ///////////////////////////////////////////////////////////////////////
 void runOnce()
 {
-  float x_, y_;
-  float fx, fy;
-  //// let's insert gray everywhere
-  //for (int y = 0; y < yRes; y++)
-    //for (int x = 0; x < xRes; x++)
-      //field_a(x,y) = 0.25;
 
-  //// let's insert gray everywhere
-  //for (int y = 0; y < yRes; y++)
-    //for (int x = 0; x < xRes; x++)
-      //field_b(x,y) = 0.25;
-
-  for (int y = 0; y < yRes; y++) {
-    for (int x = 0; x < xRes; x++) {
-      fx = (float) x;
-      fy = (float) y;
-      x_ = fx / xRes * 2 - 1.0;
-      y_ = fy / yRes * 2 - 1.0;
-      //field_a(x,y) = 1 - exp(-80 * (pow(x_ + 0.05, 2) + pow(y_ + 0.05, 2)));
-      field_a(x,y) = 0.0;
-    }
-  }
-
-  for (int y = 0; y < yRes; y++) {
-    for (int x = 0; x < xRes; x++) {
-      fx = (float) x;
-      fy = (float) y;
-      x_ = fx / xRes * 2 - 1.0;
-      y_ = fy / yRes * 2 - 1.0;
-      //field_b(x,y) = exp(-80 * (pow(x_ - 0.05, 2) + pow(y_ - 0.05, 2)));
-      field_b(x,y) = 0.0;
-    }
-  }
-
-  // zero the boundaries
-  zeroBoundary(field_a);
-  zeroBoundary(field_b);
 }

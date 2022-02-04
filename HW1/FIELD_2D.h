@@ -27,13 +27,12 @@ public:
   // common field operations
   void clear();
   void normalize();
-  //void FIELD_2D::normalize(FIELD_2D &other_field);
   FIELD_2D& abs();
 
-  bool isnan();
   float min();
   float max();
   void argmax(int *coords);
+  bool isnan();
 
   // take the log
   void log(float base = 2.0);
@@ -76,14 +75,11 @@ private:
 };
 
 FIELD_2D operator*(const FIELD_2D& A, const float alpha);
-FIELD_2D operator*(const FIELD_2D &A, const FIELD_2D &B);
 FIELD_2D operator/(const FIELD_2D& A, const float alpha);
 FIELD_2D operator+(const FIELD_2D& A, const float alpha);
 FIELD_2D operator*(const float alpha, const FIELD_2D& A);
 FIELD_2D operator+(const float alpha, const FIELD_2D& A);
 FIELD_2D operator-(const FIELD_2D& A, const FIELD_2D& B);
-FIELD_2D operator-(const FIELD_2D &A, const float alpha);
-FIELD_2D operator-(const float alpha, const FIELD_2D &B);
 FIELD_2D operator+(const FIELD_2D& A, const FIELD_2D& B);
 
 #endif

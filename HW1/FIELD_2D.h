@@ -75,11 +75,14 @@ private:
 };
 
 FIELD_2D operator*(const FIELD_2D& A, const float alpha);
+FIELD_2D operator*(const FIELD_2D &A, const FIELD_2D &B);
 FIELD_2D operator/(const FIELD_2D& A, const float alpha);
 FIELD_2D operator+(const FIELD_2D& A, const float alpha);
 FIELD_2D operator*(const float alpha, const FIELD_2D& A);
 FIELD_2D operator+(const float alpha, const FIELD_2D& A);
 FIELD_2D operator-(const FIELD_2D& A, const FIELD_2D& B);
+FIELD_2D operator-(const FIELD_2D &A, const float alpha);
+FIELD_2D operator-(const float alpha, const FIELD_2D &B);
 FIELD_2D operator+(const FIELD_2D& A, const FIELD_2D& B);
 
 #endif

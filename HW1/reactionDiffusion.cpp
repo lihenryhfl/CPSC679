@@ -535,14 +535,9 @@ void runForGS(float d_a, float d_b, float dt, float f, float k)
   field_tmp *= field_b;
   field_tmp *= field_b;
 
-  field_step_a = 1.0;
-  field_step_a -= field_a;
-  field_step_a *= f;
-  field_step_a -= field_tmp;
+  field_step_a = f * (1.0 - field_a) - field_tmp;
 
-  field_step_b = field_b;
-  field_step_b *= -(f + k);
-  field_step_b += field_tmp;
+  field_step_b = (-(f + k)) * field_b + field_tmp;
 
   // zero the boundaries
   zeroBoundary(field_a);
@@ -567,8 +562,8 @@ void runForFHN(float d_a, float d_b, float dt, float alpha, float beta, float ep
   // initialize time step field
   FIELD_2D field_step_a(xRes, yRes);
   FIELD_2D field_step_b(xRes, yRes);
-  FIELD_2D field_tmp(xRes, yRes);
   FIELD_2D laplacian(xRes, yRes);
+  float one = 1.0;
   float dx;
 
   // add initial condition
@@ -585,6 +580,10 @@ void runForFHN(float d_a, float d_b, float dt, float alpha, float beta, float ep
   d_b = d_b / dx / dx;
 
   // react chemicals
+  field_step_a = (one / epsilon) * field_a * (one - field_a) * (field_a - ((field_b + beta) / alpha));
+
+  field_step_b += field_a;
+  field_step_b -= field_b;
 
   // zero the boundaries
   zeroBoundary(field_a);

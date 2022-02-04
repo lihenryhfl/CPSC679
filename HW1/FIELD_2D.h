@@ -33,6 +33,7 @@ public:
   bool isnan();
   float min();
   float max();
+  void argmax(int *coords);
 
   // take the log
   void log(float base = 2.0);

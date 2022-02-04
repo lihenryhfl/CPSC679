@@ -71,6 +71,7 @@ void runEverytime();
 // forward declare the method-specific timestepping function
 void runForGS(float d_a = 2e-4, float d_b = 1e-5, float dt = 0.1, float f = 0.05, float k = 0.0675);
 //void runForGS(float d_a = 2e-5, float d_b = 1e-5, float dt = 0.1, float f = 0.04, float k = 0.06);
+//void runForFHN(float d_a = 0.75, float d_b = 0.0, float dt = 0.02, float alpha = 0.75, float beta = 0.01, float epsilon = 0.02);
 void runForFHN(float d_a = 0.75, float d_b = 0.0, float dt = 0.02, float alpha = 0.75, float beta = 0.01, float epsilon = 0.02);
 
 ///////////////////////////////////////////////////////////////////////
@@ -563,16 +564,7 @@ void runForFHN(float d_a, float d_b, float dt, float alpha, float beta, float ep
   FIELD_2D field_step_a(xRes, yRes);
   FIELD_2D field_step_b(xRes, yRes);
   FIELD_2D laplacian(xRes, yRes);
-  float one = 1.0;
   float dx;
-
-  // add initial condition
-  for (int y = 0.45 * yRes; y < 0.55 * yRes; y++) {
-    for (int x = 0.45 * xRes; x < 0.55 * xRes; x++) {
-      field_a(x,y) += 1.0;
-      field_b(x,y) += alpha / 2;
-    }
-  }
 
   // set d_a and d_b properly
   dx = 165.0 / xRes;
@@ -580,10 +572,9 @@ void runForFHN(float d_a, float d_b, float dt, float alpha, float beta, float ep
   d_b = d_b / dx / dx;
 
   // react chemicals
-  field_step_a = (one / epsilon) * field_a * (one - field_a) * (field_a - ((field_b + beta) / alpha));
+  field_step_a = (1.0 / epsilon) * field_a * (1.0 - field_a) * (field_a - ((field_b + beta) / alpha));
 
-  field_step_b += field_a;
-  field_step_b -= field_b;
+  field_step_b = field_a - field_b;
 
   // zero the boundaries
   zeroBoundary(field_a);
@@ -621,8 +612,17 @@ void runEverytime()
   if (!fieldUnstable(field_a, "if field") && !fieldUnstable(field_b, "if field_b")) {
   //if (counter < 3 && !fieldUnstable(field, "if field") && !fieldUnstable(field_b, "if field_b")) {
     if (fhn) {
-      for (int iters = 0; iters < 10; iters++)
+      // add initial condition
+      for (int y = 0.45 * yRes; y < 0.55 * yRes; y++) {
+        for (int x = 0.45 * xRes; x < 0.55 * xRes; x++) {
+          field_a(x,y) += 1.0;
+          field_b(x,y) += 0.75 / 2.0;
+        }
+      }
+
+      for (int iters = 0; iters < 10; iters++) {
         runForFHN();
+      }
     } else {
     // add initial condition
     if (counter % 1 == 0) {

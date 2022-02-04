@@ -162,24 +162,6 @@ void FIELD_2D::normalize()
 
 ///////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////
-//void FIELD_2D::normalize(FIELD_2D &other_field)
-//{
-  //float maxFound = 0.0;
-  //float minFound = _data[0];
-  //for (int x = 0; x < _totalCells; x++) {
-    //maxFound = (_data[x] > maxFound) ? _data[x] : maxFound;
-    //maxFound = (other_field[x] > maxFound) ? other_field[x] : maxFound;
-    //minFound = (_data[x] < minFound) ? _data[x] : minFound;
-    //minFound = (other_field[x] < minFound) ? other_field[x] : minFound;
-  //}
-
-  //float range = 1.0 / (maxFound - minFound);
-  //for (int x = 0; x < _totalCells; x++)
-    //_data[x] = (_data[x] - minFound) * range;
-    //other_field[x] = (other_field[x] - minFound) * range;
-//}
-///////////////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////////////
 bool FIELD_2D::isnan()
 {
   bool nan_bool = false;
@@ -460,6 +442,28 @@ float FIELD_2D::max()
     final = (_data[i] > final) ? _data[i] : final;
 
   return final;
+}
+
+///////////////////////////////////////////////////////////////////////
+// get coordinates of the max of the field
+///////////////////////////////////////////////////////////////////////
+void FIELD_2D::argmax(int *coords)
+{
+  assert(_xRes > 0);
+  assert(_yRes > 0);
+  float final = _data[0];
+  int i_max = 0;
+  int coords[2];
+
+  for (int i = 0; i < _xRes * _yRes; i++) {
+    if (_data[i] > final) {
+      final = _data[i];
+      i_max = i;
+    }
+  }
+
+  coords[0] = i_max % _xRes;
+  coords[1] = i_max / _xRes;
 }
 
 ///////////////////////////////////////////////////////////////////////

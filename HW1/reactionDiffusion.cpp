@@ -70,9 +70,7 @@ void runEverytime();
 
 // forward declare the method-specific timestepping function
 void runForGS(float d_a = 2e-4, float d_b = 1e-5, float dt = 0.1, float f = 0.05, float k = 0.0675);
-//void runForGS(float d_a = 2e-5, float d_b = 1e-5, float dt = 0.1, float f = 0.04, float k = 0.06);
 void runForFHN(float d_a = 0.75, float d_b = 0.0, float dt = 0.02, float alpha = 0.75, float beta = 0.01, float epsilon = 0.02);
-//void runForFHN(float d_a = 0.75, float d_b = 0.0, float dt = 0.02, float alpha = 0.75, float beta = 0.01, float epsilon = 0.02);
 
 ///////////////////////////////////////////////////////////////////////
 // Figure out which field element is being pointed at, set xField and
@@ -555,7 +553,6 @@ void runForGS(float d_a, float d_b, float dt, float f, float k)
   // set initial conditions
   for (int y = 0.45 * yRes; y < 0.55 * yRes; y++) {
     for (int x = 0.45 * xRes; x < 0.55 * xRes; x++) {
-      //field_b(x,y) += 1.0;
       field_b(x,y) = 1.0;
     }
   }

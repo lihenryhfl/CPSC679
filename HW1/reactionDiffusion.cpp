@@ -18,7 +18,6 @@ bool fhn;
 // resolution of the field
 int xRes = 200;
 int yRes = 200;
-float xSize;
 
 // the field being drawn and manipulated
 FIELD_2D field(xRes, yRes);
@@ -69,8 +68,8 @@ void runOnce();
 void runEverytime();
 
 // forward declare the method-specific timestepping function
-void runForGS(float d_a = 2e-4, float d_b = 1e-5, float dt = 0.1, float f = 0.05, float k = 0.0675);
-//void runForGS(float d_a = 2e-5, float d_b = 1e-5, float dt = 0.61, float f = 0.04, float k = 0.06);
+//void runForGS(float d_a = 2e-4, float d_b = 1e-5, float dt = 0.1, float f = 0.05, float k = 0.0675);
+void runForGS(float d_a = 2e-5, float d_b = 1e-5, float dt = 0.1, float f = 0.04, float k = 0.06);
 void runForFHN(float d_a = 0.75, float d_b = 0.0, float dt = 0.02, float alpha = 0.75, float beta = 0.01, float epsilon = 0.02);
 
 ///////////////////////////////////////////////////////////////////////
@@ -527,7 +526,7 @@ void runForGS(float d_a, float d_b, float dt, float f, float k)
 
   // set d_a and d_b properly
   //dx = 4.0 / xRes;
-  dx = xSize / xRes;
+  dx = 2.0 / xRes;
   d_a = d_a / dx / dx;
   d_b = d_b / dx / dx;
 
@@ -537,6 +536,7 @@ void runForGS(float d_a, float d_b, float dt, float f, float k)
       //field_b(x,y) += 1.0;
     //}
   //}
+
 
   // react chemicals
   field_tmp = field;
@@ -564,16 +564,13 @@ void runForGS(float d_a, float d_b, float dt, float f, float k)
 
   // compute laplacian
   computeLaplacian(field, laplacian);
-  //string s = string("./outputs/GS_laplacian_a.MAT");
-  //laplacian.writeMatlab(s, string("x"));
   field_step += d_a * laplacian;
   field += dt * field_step;
 
   computeLaplacian(field_b, laplacian);
-  //s = string("./outputs/GS_laplacian_b.MAT");
-  //laplacian.writeMatlab(s, string("x"));
   field_step_b += d_b * laplacian;
   field_b += dt * field_step_b;
+
 
   fieldUnstable(field_b, "field_b");
   fieldUnstable(field, "field");
@@ -612,21 +609,23 @@ void runEverytime()
 {
   static int counter = 0;
 
-
-  // add initial condition
-  for (int y = 0.45 * yRes; y < 0.55 * yRes; y++) {
-    for (int x = 0.45 * xRes; x < 0.55 * xRes; x++) {
-      //field_b(x,y) += 1.0;
-      field(x,y) += 1.0;
-    }
+  if (counter == 0) {
+    cout << "Is it unstable to begin with?" << endl;
+    fieldUnstable(field, "field");
+    fieldUnstable(field_b, "field_b");
+    cout << "Now starting simulation." << endl;
   }
 
+  //// add initial condition
+  //for (int y = 0.45 * yRes; y < 0.55 * yRes; y++) {
+    //for (int x = 0.45 * xRes; x < 0.55 * xRes; x++) {
+      ////field_b(x,y) += 1.0;
+      //field(x,y) += 1.0;
+    //}
+  //}
+
   if (!fieldUnstable(field, "if field") && !fieldUnstable(field_b, "if field_b")) {
-  //if (counter < 1 && !fieldUnstable(field, "if field") && !fieldUnstable(field_b, "if field_b")) {
-    //string s = string("./outputs/GS_a_") + to_string(counter) + string(".MAT");
-    //field.writeMatlab(s, string("x"));
-    //s = string("./outputs/GS_b_") + to_string(counter) + string(".MAT");
-    //field_b.writeMatlab(s, string("x"));
+  //if (counter < 3 && !fieldUnstable(field, "if field") && !fieldUnstable(field_b, "if field_b")) {
     if (fhn) {
       for (int iters = 0; iters < 10; iters++)
         runForFHN();
@@ -650,6 +649,8 @@ void runEverytime()
 ///////////////////////////////////////////////////////////////////////
 void runOnce()
 {
+  float x_, y_;
+  float fx, fy;
   //// let's insert gray everywhere
   //for (int y = 0; y < yRes; y++)
     //for (int x = 0; x < xRes; x++)
@@ -660,35 +661,27 @@ void runOnce()
     //for (int x = 0; x < xRes; x++)
       //field_b(x,y) = 0.25;
 
-  if (fhn)
-    xSize = 165.0;
-  else
-    xSize = 2.0;
+  for (int y = 0; y < yRes; y++) {
+    for (int x = 0; x < xRes; x++) {
+      fx = (float) x;
+      fy = (float) y;
+      x_ = fx / xRes * 2 - 1.0;
+      y_ = fy / yRes * 2 - 1.0;
+      field(x,y) = 1 - exp(-80 * (pow(x_ + 0.05, 2) + pow(y_ + 0.05, 2)));
+    }
+  }
 
-  //float x_, y_;
-  //float fx, fy;
-
-  //for (int y = 0; y < yRes; y++) {
-    //for (int x = 0; x < xRes; x++) {
-      //fx = (float) x;
-      //fy = (float) y;
-      //x_ = fx / xRes * 2 - 1.0;
-      //y_ = fy / yRes * 2 - 1.0;
-      //field(x,y) = 1 - exp(-80 * (pow(x_ + 0.05, 2) + pow(y_ + 0.05, 2)));
-    //}
-  //}
-
-  //for (int y = 0; y < yRes; y++) {
-    //for (int x = 0; x < xRes; x++) {
-      //fx = (float) x;
-      //fy = (float) y;
-      //x_ = fx / xRes * 2 - 1.0;
-      //y_ = fy / yRes * 2 - 1.0;
-      //field_b(x,y) = exp(-80 * (pow(x_ - 0.05, 2) + pow(y_ - 0.05, 2)));
-      ////if (x > 80 && x < 100 && y > 80 && y < 100)
-        ////cout << "x: " << x << ", y:" << y << ", x_: " << x_ << ", y_: " << y_ << ", field(x,y): " <<  field(x,y) << endl;
-    //}
-  //}
+  for (int y = 0; y < yRes; y++) {
+    for (int x = 0; x < xRes; x++) {
+      fx = (float) x;
+      fy = (float) y;
+      x_ = fx / xRes * 2 - 1.0;
+      y_ = fy / yRes * 2 - 1.0;
+      field_b(x,y) = exp(-80 * (pow(x_ - 0.05, 2) + pow(y_ - 0.05, 2)));
+      //if (x > 80 && x < 100 && y > 80 && y < 100)
+        //cout << "x: " << x << ", y:" << y << ", x_: " << x_ << ", y_: " << y_ << ", field(x,y): " <<  field(x,y) << endl;
+    }
+  }
 
   // zero the boundaries
   zeroBoundary(field);

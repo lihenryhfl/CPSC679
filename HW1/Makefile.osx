@@ -7,7 +7,7 @@ CFLAGS     = ${CFLAGS_COMMON}
 LDFLAGS    = ${LDFLAGS_COMMON}
 EXECUTABLE = reactionDiffusion
 
-SOURCES    = reactionDiffusion2.cpp \
+SOURCES    = reactionDiffusion.cpp \
 	FIELD_2D.cpp 
 
 OBJECTS    = $(SOURCES:.cpp=.o)

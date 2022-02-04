@@ -68,8 +68,8 @@ void runOnce();
 void runEverytime();
 
 // forward declare the method-specific timestepping function
-//void runForGS(float d_a = 2e-4, float d_b = 1e-5, float dt = 0.1, float f = 0.05, float k = 0.0675);
-void runForGS(float d_a = 2e-5, float d_b = 1e-5, float dt = 0.1, float f = 0.04, float k = 0.06);
+void runForGS(float d_a = 2e-4, float d_b = 1e-5, float dt = 0.1, float f = 0.05, float k = 0.0675);
+//void runForGS(float d_a = 2e-5, float d_b = 1e-5, float dt = 0.1, float f = 0.04, float k = 0.06);
 void runForFHN(float d_a = 0.75, float d_b = 0.0, float dt = 0.02, float alpha = 0.75, float beta = 0.01, float epsilon = 0.02);
 
 ///////////////////////////////////////////////////////////////////////
@@ -530,13 +530,11 @@ void runForGS(float d_a, float d_b, float dt, float f, float k)
   d_a = d_a / dx / dx;
   d_b = d_b / dx / dx;
 
-  //// add initial condition
   //for (int y = 0.45 * yRes; y < 0.55 * yRes; y++) {
     //for (int x = 0.45 * xRes; x < 0.55 * xRes; x++) {
       //field_b(x,y) += 1.0;
     //}
   //}
-
 
   // react chemicals
   field_tmp = field;
@@ -616,13 +614,14 @@ void runEverytime()
     cout << "Now starting simulation." << endl;
   }
 
-  //// add initial condition
-  //for (int y = 0.45 * yRes; y < 0.55 * yRes; y++) {
-    //for (int x = 0.45 * xRes; x < 0.55 * xRes; x++) {
-      ////field_b(x,y) += 1.0;
-      //field(x,y) += 1.0;
-    //}
-  //}
+  // add initial condition
+  if (counter % 1 == 0) {
+    for (int y = 0.45 * yRes; y < 0.55 * yRes; y++) {
+      for (int x = 0.45 * xRes; x < 0.55 * xRes; x++) {
+        field_b(x,y) += 1.0;
+      }
+    }
+  }
 
   if (!fieldUnstable(field, "if field") && !fieldUnstable(field_b, "if field_b")) {
   //if (counter < 3 && !fieldUnstable(field, "if field") && !fieldUnstable(field_b, "if field_b")) {
@@ -630,9 +629,9 @@ void runEverytime()
       for (int iters = 0; iters < 10; iters++)
         runForFHN();
     } else {
-      for (int iters = 0; iters < 100; iters++)
-      //for (int iters = 0; iters < 1; iters++)
+      for (int iters = 0; iters < 100; iters++) {
         runForGS();
+      }
     }
   }
 
@@ -667,7 +666,8 @@ void runOnce()
       fy = (float) y;
       x_ = fx / xRes * 2 - 1.0;
       y_ = fy / yRes * 2 - 1.0;
-      field(x,y) = 1 - exp(-80 * (pow(x_ + 0.05, 2) + pow(y_ + 0.05, 2)));
+      //field(x,y) = 1 - exp(-80 * (pow(x_ + 0.05, 2) + pow(y_ + 0.05, 2)));
+      field(x,y) = 0.0;
     }
   }
 
@@ -677,11 +677,17 @@ void runOnce()
       fy = (float) y;
       x_ = fx / xRes * 2 - 1.0;
       y_ = fy / yRes * 2 - 1.0;
-      field_b(x,y) = exp(-80 * (pow(x_ - 0.05, 2) + pow(y_ - 0.05, 2)));
-      //if (x > 80 && x < 100 && y > 80 && y < 100)
-        //cout << "x: " << x << ", y:" << y << ", x_: " << x_ << ", y_: " << y_ << ", field(x,y): " <<  field(x,y) << endl;
+      //field_b(x,y) = exp(-80 * (pow(x_ - 0.05, 2) + pow(y_ - 0.05, 2)));
+      field_b(x,y) = 0.0;
     }
   }
+
+  //// add initial condition
+  //for (int y = 0.45 * yRes; y < 0.55 * yRes; y++) {
+    //for (int x = 0.45 * xRes; x < 0.55 * xRes; x++) {
+      //field_b(x,y) += 1.0;
+    //}
+  //}
 
   // zero the boundaries
   zeroBoundary(field);

@@ -493,6 +493,88 @@ void readSquare()
 
 ///////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////
+void readSquare2()
+{
+  vector<VECTOR2> nodes;
+  vector<VECTOR3I> triangles;
+
+  REAL xbias = -0.4;
+  nodes.resize(4);
+  nodes[0] = VECTOR2(0 + xbias,0);
+  nodes[1] = VECTOR2(0.2 + xbias,0);
+  nodes[2] = VECTOR2(0 + xbias,0.2);
+  nodes[3] = VECTOR2(0.2 + xbias,0.2);
+
+  triangles.resize(2);
+  triangles[0] = VECTOR3I(0,1,2);
+  triangles[1] = VECTOR3I(1,3,2);
+
+  triangleMesh = new TRIANGLE_MESH(nodes, triangles);
+
+  const REAL mu     = MATERIAL::computeMu(youngsModulus, poissonsRatio);
+  const REAL lambda = MATERIAL::computeLambda(youngsModulus, poissonsRatio);
+  material = new STVK(mu, lambda);
+  //integrator = new FORWARD_EULER(*triangleMesh, *material);
+  integrator = new BACKWARD_EULER(*triangleMesh, *material);
+  //integrator->dt() = 1.0 / 30.0;
+
+  squares.reserve(10);
+  centers.reserve(10);
+
+  VECTOR2 center(0.35, 0.95);
+  SQUARE square(center, 0.75);
+  square.rotation() = Eigen::Rotation2D<REAL>(M_PI / 4.0).toRotationMatrix();
+
+  center = VECTOR2(-0.5, -1.0);
+  centers.push_back(center);
+  square.translation() = centers.back();
+  squares.push_back(square);
+
+  center = VECTOR2(0.75, -1.625);
+  centers.push_back(center);
+  square.translation() = centers.back();
+  squares.push_back(square);
+
+  center = VECTOR2(-0.5, -2.25);
+  centers.push_back(center);
+  square.translation() = centers.back();
+  squares.push_back(square);
+
+  center = VECTOR2(0.75, -2.875);
+  centers.push_back(center);
+  square.translation() = centers.back();
+  squares.push_back(square);
+
+  center = VECTOR2(-0.5, -3.5);
+  centers.push_back(center);
+  square.translation() = centers.back();
+  squares.push_back(square);
+
+  center = VECTOR2(0.75, -4.125);
+  centers.push_back(center);
+  square.translation() = centers.back();
+  squares.push_back(square);
+
+  //center = VECTOR2(0.0, -7.125);
+  //centers.push_back(center);
+  //square.translation() = centers.back();
+  //square.scale() = MATRIX2::Identity() * 6.0;
+  //square.rotation() = Eigen::Rotation2D<REAL>(0.0).toRotationMatrix();
+  //squares.push_back(square);
+  //eyeCenter = VECTOR3(0.421, 0.446, 1);
+  //zoom = 3.75;
+  eyeCenter  = VECTOR3(0.544, -3.182,1);
+  zoom = 10.0;
+
+  //eyeCenter  = VECTOR3(0.206, -2.231, 1);
+  //zoom = 5.516;
+
+  REAL area = triangleMesh->triangleArea(0) + triangleMesh->triangleArea(1);
+  cout << " total area: " << area << endl;
+}
+
+///////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////
 void readTriangle()
 {
   vector<VECTOR2> nodes;
@@ -585,13 +667,89 @@ void readBunny()
 
 ///////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////
+void readBunny2()
+{
+  vector<VECTOR2> nodes;
+  vector<VECTOR3I> triangles;
+
+  loadTriangles2D("./data/bunny/bunny.1", nodes, triangles);
+  triangleMesh = new TRIANGLE_MESH(nodes, triangles);
+  const REAL mu     = MATERIAL::computeMu(youngsModulus, poissonsRatio);
+  const REAL lambda = MATERIAL::computeLambda(youngsModulus, poissonsRatio);
+  cout << " Mu: " << mu << " Lambda: " << lambda << endl;
+  material = new STVK(mu, lambda);
+  //integrator = new FORWARD_EULER(*triangleMesh, *material);
+  integrator = new BACKWARD_EULER(*triangleMesh, *material);
+  //integrator->dt() = 1.0 / 30.0;
+
+  // pin down the vertices inside the ceiling
+  //integrator->applyPinConstraints(ceiling);
+  below.rotation() = Eigen::Rotation2D<REAL>(M_PI / 4.0).toRotationMatrix();
+
+  squares.reserve(10);
+  centers.reserve(10);
+
+  REAL leftcenter = -0.6;
+  REAL rightcenter = 1.1;
+
+  // this first square is never actually used
+  VECTOR2 center(0.35, 0.95);
+  SQUARE square(center, 1.0);
+  square.rotation() = Eigen::Rotation2D<REAL>(M_PI / 4.0).toRotationMatrix();
+
+  center = VECTOR2(leftcenter, -1.0);
+  centers.push_back(center);
+  square.translation() = centers.back();
+  squares.push_back(square);
+
+  center = VECTOR2(rightcenter, -2.0);
+  centers.push_back(center);
+  square.translation() = centers.back();
+  squares.push_back(square);
+
+  //center = VECTOR2(-0.5, -2.25);
+  //centers.push_back(center);
+  //square.translation() = centers.back();
+  //squares.push_back(square);
+
+  //center = VECTOR2(0.75, -2.875);
+  //centers.push_back(center);
+  //square.translation() = centers.back();
+  //squares.push_back(square);
+
+  center = VECTOR2(leftcenter, -3.0);
+  centers.push_back(center);
+  square.translation() = centers.back();
+  squares.push_back(square);
+
+  center = VECTOR2(rightcenter, -4.125);
+  centers.push_back(center);
+  square.translation() = centers.back();
+  squares.push_back(square);
+
+  center = VECTOR2(0.0, -7.125);
+  centers.push_back(center);
+  square.translation() = centers.back();
+  square.scale() = MATRIX2::Identity() * 6.0;
+  square.scaleInverse() = square.scale().inverse();
+  square.rotation() = Eigen::Rotation2D<REAL>(0.0).toRotationMatrix();
+  squares.push_back(square);
+
+  eyeCenter  = VECTOR3(0.206, -2.231, 1);
+  zoom = 5.516;
+}
+
+///////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////
 int main(int argc, char** argv)
 {
   cout << " Usage: " << argv[0] << endl;
 
-  readBunny();
+  //readBunny();
+  readBunny2();
   //readTriangle();
   //readSquare();
+  //readSquare2();
 
   // initialize GLUT and GL
   glutInit(&argc, argv);

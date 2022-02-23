@@ -69,8 +69,11 @@ bool BACKWARD_EULER::solve(const bool verbose)
     const int pin2 = _collidedVertices[x] * 2;
     vertexVelocity << _velocity[pin2], _velocity[pin2 + 1];
     normalVelocity = _collidedNormals[x].transpose() * vertexVelocity;
+    //if (_signedDistances[x] < -0.05 ||  normalVelocity < 0)
     if (normalVelocity < 0)
+    //if (true)
     {
+      cout << "RUNNING COLLISION CODE" << endl;
       outerProd = _collidedNormals[x] * _collidedNormals[x].transpose();
       filter(pin2, pin2) -= outerProd(0, 0);
       filter(pin2 + 1, pin2) -= outerProd(1, 0);

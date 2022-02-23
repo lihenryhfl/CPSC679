@@ -27,8 +27,8 @@ public:
 
   // get the closest point on the cube, as well as the normal at the point
   virtual void getClosestPoint(const VECTOR2& query,
-                               VECTOR2& closestPointLocal,
-                               VECTOR2& normalLocal) const override;
+                               VECTOR2& closestPoint,
+                               VECTOR2& normal) const override;
 
   REAL getPointInfo(const VECTOR2& query,
                     VECTOR2& closestPoint,

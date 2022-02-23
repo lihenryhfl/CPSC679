@@ -82,6 +82,9 @@ protected:
   // which vertices are colliding with boxes?
   std::vector<int> _collidedVertices;
 
+  // and how far are they from the boxes?
+  std::vector<REAL> _signedDistances;
+
   // which way do we go, to project to the closest exterior point on the square?
   std::vector<VECTOR2> _collidedDeltas;
 

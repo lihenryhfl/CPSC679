@@ -84,12 +84,18 @@ void TIMESTEPPER::findCollidedVertices(const vector<SQUARE>& squares)
   _collidedVertices.clear();
   _collidedNormals.clear();
   _collidedVertices.clear();
+  _signedDistances.clear();
 
   VECTOR2 closestPoint, normal;
   const vector<VECTOR2>& vertices = _triangleMesh.vertices();
-  for (int x = 0; x < vertices.size(); x++)
+  for (int s = 0; s < squares.size(); s++)
   {
-    for (int s = 0; s < squares.size(); s++)
+    //vector<VECTOR2> verts = squares[s].vertices();
+    //cout << "square " << s << ", " << verts[0] << endl;
+    //cout << "square " << s << ", " << verts[1] << endl;
+    //cout << "square " << s << ", " << verts[2] << endl;
+    //cout << "square " << s << ", " << verts[3] << endl;
+    for (int x = 0; x < vertices.size(); x++)
     {
       if (squares[s].inside(vertices[x]))
       {
@@ -97,6 +103,7 @@ void TIMESTEPPER::findCollidedVertices(const vector<SQUARE>& squares)
         _collidedVertices.push_back(x);
         _collidedDeltas.push_back(closestPoint - vertices[x]);
         _collidedNormals.push_back(normal);
+        _signedDistances.push_back(squares[s].signedDistance(vertices[x]));
       }
     }
   }

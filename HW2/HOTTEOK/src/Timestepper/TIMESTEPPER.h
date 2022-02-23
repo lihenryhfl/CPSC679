@@ -11,7 +11,7 @@ class TIMESTEPPER
 {
 public:
   TIMESTEPPER(TRIANGLE_MESH& triangleMesh, MATERIAL& hyperelastic);
-  virtual ~TIMESTEPPER(); 
+  virtual ~TIMESTEPPER();
 
   VECTOR& externalForces()             { return _externalForces; };
   const VECTOR& externalForces() const { return _externalForces; };
@@ -27,6 +27,9 @@ public:
   // all vertices that start out inside this box are pinned
   void applyPinConstraints(const SQUARE& square);
 
+  // checks for collisions given squares
+  void findCollidedVertices(const std::vector<SQUARE>& squares);
+
   // take a timestep
   virtual bool solve(const bool verbose) = 0;
 
@@ -37,7 +40,7 @@ public:
 protected:
   // build the mass matrix based on the one-ring volumes
   void buildMassMatrix();
-  
+
   // build the damping matrix based on the rest pose stiffness
   void buildRayleighDampingMatrix();
 
@@ -52,7 +55,7 @@ protected:
   VECTOR _position;
   VECTOR _velocity;
   VECTOR _temp;
-  
+
   // timestep
   REAL _dt;
   REAL _rayleighAlpha;
@@ -75,6 +78,15 @@ protected:
 
   // which vertices have been pinned by a box?
   std::vector<int> _pinnedVertices;
+
+  // which vertices are colliding with boxes?
+  std::vector<int> _collidedVertices;
+
+  // which way do we go, to project to the closest exterior point on the square?
+  std::vector<VECTOR2> _collidedDeltas;
+
+  // what are their normals?
+  std::vector<VECTOR2> _collidedNormals;
 };
 
 #endif

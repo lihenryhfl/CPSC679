@@ -50,6 +50,7 @@ bool BACKWARD_EULER::solve(const bool verbose)
   MATRIX eye(DOFs, DOFs);
   eye.setIdentity();
 
+  // apply pinned vertex constraints
   for (unsigned int x = 0; x < _pinnedVertices.size(); x++)
   {
     const int pin2 = _pinnedVertices[x] * 2;
@@ -57,6 +58,27 @@ bool BACKWARD_EULER::solve(const bool verbose)
     filter(pin2 + 1, pin2 + 1) = 0;
     z(pin2) = 0;
     z(pin2 + 1) = 0;
+  }
+
+  VECTOR2 vertexVelocity;
+  MATRIX2 outerProd;
+  REAL normalVelocity;
+  // apply collided vertex constraints
+  for (unsigned int x = 0; x < _collidedVertices.size(); x++)
+  {
+    const int pin2 = _collidedVertices[x] * 2;
+    vertexVelocity << _velocity[pin2], _velocity[pin2 + 1];
+    normalVelocity = _collidedNormals[x].transpose() * vertexVelocity;
+    if (normalVelocity < 0)
+    {
+      outerProd = _collidedNormals[x] * _collidedNormals[x].transpose();
+      filter(pin2, pin2) -= outerProd(0, 0);
+      filter(pin2 + 1, pin2) -= outerProd(1, 0);
+      filter(pin2, pin2 + 1) -= outerProd(0, 1);
+      filter(pin2 + 1, pin2 + 1) -= outerProd(1, 1);
+      z(pin2) = _collidedDeltas[x][0];
+      z(pin2 + 1) = _collidedDeltas[x][1];
+    }
   }
 
   MATRIX dfdx = _triangleMesh.computeStiffnessMatrix(&_hyperelastic);
@@ -67,7 +89,6 @@ bool BACKWARD_EULER::solve(const bool verbose)
   VECTOR y = A_.colPivHouseholderQr().solve(b_);
   VECTOR update = y + z;
 
-  //update = filter * update;
   update += _position;
 
   VECTOR diff = (update - _position);
@@ -80,3 +101,4 @@ bool BACKWARD_EULER::solve(const bool verbose)
 
   return true;
 }
+

@@ -75,11 +75,12 @@ vector<VECTOR2> centers;
 
 ///////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////
-void drawSquare(const SQUARE& square)
+void drawSquare(const SQUARE& square, const VECTOR4& color)
 {
   vector<VECTOR2> vertices = square.vertices();
 
-  glColor4f(0, 0, 1.0, 0.5);
+  //glColor4f(0, 0, 1.0, 0.5);
+  glColor4f(color[0], color[1], color[2], color[3]);
 
   glBegin(GL_TRIANGLES);
     glVertex2f(vertices[0][0], vertices[0][1]);
@@ -152,11 +153,14 @@ void glutDisplay()
   //drawMesh(VECTOR4(0.0 / 255.0, 0.0 / 255, 0.0 / 255.0, 0.5));
 
   // draw the kinematic colliders
-  drawSquare(ceiling);
+  //glColor4f(0, 0, 1.0, 0.5);
+  VECTOR4 squareColor(0, 0, 1.0, 0.5);
+  drawSquare(ceiling, squareColor);
   //drawSquare(below);
   //
-  for (unsigned int x = 0; x < squares.size(); x++)
-    drawSquare(squares[x]);
+  for (unsigned int x = 0; x < squares.size(); x++) {
+    drawSquare(squares[x], squareColor);
+  }
 
   glutSwapBuffers();
 }
@@ -266,6 +270,7 @@ void glutIdle()
     VECTOR2 gravity(0.0, -1);
     //VECTOR2 gravity(0.0, 0);
     integrator->addGravity(gravity);
+    integrator->findCollidedVertices(squares);
     integrator->solve(true);
     frame++;
 
@@ -527,7 +532,7 @@ void readBunny()
   //integrator->dt() = 1.0 / 30.0;
 
   // pin down the vertices inside the ceiling
-  integrator->applyPinConstraints(ceiling);
+  //integrator->applyPinConstraints(ceiling);
   below.rotation() = Eigen::Rotation2D<REAL>(M_PI / 4.0).toRotationMatrix();
 
   squares.reserve(10);

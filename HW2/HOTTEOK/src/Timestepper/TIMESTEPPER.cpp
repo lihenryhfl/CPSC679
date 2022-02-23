@@ -77,6 +77,34 @@ void TIMESTEPPER::applyPinConstraints(const SQUARE& square)
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////
+// all vertices that start out inside this box are pinned
+///////////////////////////////////////////////////////////////////////////////////////////////////////
+void TIMESTEPPER::findCollidedVertices(const vector<SQUARE>& squares)
+{
+  _collidedVertices.clear();
+  _collidedNormals.clear();
+  _collidedVertices.clear();
+
+  VECTOR2 closestPoint, normal;
+  const vector<VECTOR2>& vertices = _triangleMesh.vertices();
+  for (int x = 0; x < vertices.size(); x++)
+  {
+    for (int s = 0; s < squares.size(); s++)
+    {
+      if (squares[s].inside(vertices[x]))
+      {
+        squares[s].getClosestPoint(vertices[x], closestPoint, normal);
+        _collidedVertices.push_back(x);
+        _collidedDeltas.push_back(closestPoint - vertices[x]);
+        _collidedNormals.push_back(normal);
+      }
+    }
+  }
+
+  cout << " Found " << _collidedVertices.size() << " vertex collisions " << endl;
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////
 // build the mass matrix based on the one-ring volumes
 ///////////////////////////////////////////////////////////////////////////////////////////////////////
 void TIMESTEPPER::buildMassMatrix()

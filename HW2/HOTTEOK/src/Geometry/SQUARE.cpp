@@ -94,19 +94,15 @@ REAL SQUARE::getPointInfo(const VECTOR2& query, VECTOR2& closestPoint, VECTOR2& 
 
   // find closest side of square, then compute closestPoint and normal wrt that side
   if (left <= right && left <= bottom && left <= top) {
-    cout << "detected left collision!" << endl;
     closestPointLocal << -0.5, transformed[1];
     normalLocal << -1.0, 0.0;
   } else if (right <= left && right <= bottom && right <= top) {
-    cout << "detected right collision!" << endl;
     closestPointLocal << 0.5, transformed[1];
     normalLocal << 1.0, 0.0;
   } else if (bottom <= right && bottom <= left && bottom <= top) {
-    cout << "detected bottom collision! transformed: " << transformed << endl;
     closestPointLocal << transformed[0], -0.5;
     normalLocal << 0.0, -1.0;
   } else if (top <= right && top <= left && top <= bottom) {
-    cout << "detected top collision! transformed: " << transformed << endl;
     closestPointLocal << transformed[0], 0.5;
     normalLocal << 0.0, 1.0;
   } else {
@@ -115,7 +111,6 @@ REAL SQUARE::getPointInfo(const VECTOR2& query, VECTOR2& closestPoint, VECTOR2& 
 
   closestPoint = localVertexToWorld(closestPointLocal);
   normal = _rotation * normalLocal;
-  cout << "normal: " << normal << ", normalLocal: " << normalLocal << endl;
 
   distance = (query - closestPoint).norm();
 

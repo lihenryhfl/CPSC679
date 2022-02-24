@@ -77,31 +77,37 @@ void TIMESTEPPER::applyPinConstraints(const SQUARE& square)
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////
-// all vertices that start out inside this box are pinned
+// add all vertices that have collided to a list
 ///////////////////////////////////////////////////////////////////////////////////////////////////////
 void TIMESTEPPER::findCollidedVertices(const vector<SQUARE>& squares)
 {
   _collidedVertices.clear();
   _collidedNormals.clear();
+  _collidedDeltas.clear();
   _collidedVertices.clear();
   _signedDistances.clear();
+  _collidedClosestPoints.clear();
 
-  VECTOR2 closestPoint, normal;
+  VECTOR2 closestPoint, normal, delta;
   const vector<VECTOR2>& vertices = _triangleMesh.vertices();
+  _position = _triangleMesh.getPosition();
   for (int s = 0; s < squares.size(); s++)
   {
-    //vector<VECTOR2> verts = squares[s].vertices();
-    //cout << "square " << s << ", " << verts[0] << endl;
-    //cout << "square " << s << ", " << verts[1] << endl;
-    //cout << "square " << s << ", " << verts[2] << endl;
-    //cout << "square " << s << ", " << verts[3] << endl;
     for (int x = 0; x < vertices.size(); x++)
     {
       if (squares[s].inside(vertices[x]))
       {
+        //cout << _position[2 * x] - vertices[x][0] << " " << _position[2 * x + 1] - vertices[x][1] << endl;
+        //cout << "vertices: " << vertices[x][0] << " " << vertices[x][1] << endl;
         squares[s].getClosestPoint(vertices[x], closestPoint, normal);
+        //cout << "closestPoint: " << closestPoint[0] << " " << closestPoint[1] << endl;
+        delta = closestPoint - vertices[x];
+        //cout << closestPoint << endl;
+        //cout << "vertices + delta " << (vertices[x] + delta)[0] << " " << (vertices[x] + delta)[1] << endl;
+        //cout << " collision checker delta norm " << delta.norm() << endl;
+        _collidedClosestPoints.push_back(closestPoint);
         _collidedVertices.push_back(x);
-        _collidedDeltas.push_back(closestPoint - vertices[x]);
+        _collidedDeltas.push_back(delta);
         _collidedNormals.push_back(normal);
         _signedDistances.push_back(squares[s].signedDistance(vertices[x]));
       }
@@ -110,6 +116,51 @@ void TIMESTEPPER::findCollidedVertices(const vector<SQUARE>& squares)
 
   cout << " Found " << _collidedVertices.size() << " vertex collisions " << endl;
 }
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////
+//// add all vertices that have collided to a list
+/////////////////////////////////////////////////////////////////////////////////////////////////////////
+//void TIMESTEPPER::findCollidedVertices(const vector<SQUARE>& squares)
+//{
+  //_collidedVertices.clear();
+  //_collidedNormals.clear();
+  //_collidedVertices.clear();
+  //_collidedDeltas.clear();
+  //_signedDistances.clear();
+  //_collidedClosestPoints.clear();
+
+  //VECTOR2 closestPoint, normal, delta;
+  //const vector<VECTOR2>& vertices = _triangleMesh.vertices();
+  //_position = _triangleMesh.getPosition();
+  //for (int s = 0; s < squares.size(); s++)
+  //{
+    //for (int x = 0; x < vertices.size(); x++)
+    //{
+      //if (squares[s].inside(vertices[x]))
+      //{
+        ////cout << _position[2 * x] - vertices[x][0] << " " << _position[2 * x + 1] - vertices[x][1] << endl;
+        //cout << "vertices: " << vertices[x][0] << " " << vertices[x][1] << endl;
+        //squares[s].getClosestPoint(vertices[x], closestPoint, normal);
+        //cout << "closestPoint: " << closestPoint[0] << " " << closestPoint[1] << endl;
+        //delta = closestPoint - vertices[x];
+        ////cout << closestPoint << endl;
+        //cout << "vertices + delta " << (vertices[x] + delta)[0] << " " << (vertices[x] + delta)[1] << endl;
+        //cout << " collision checker delta norm " << delta.norm() << endl;
+        //cout << " collision checker delta " << delta[0] << " " << delta[1] << endl;
+        //_collidedClosestPoints.push_back(closestPoint[0]);
+        //_collidedClosestPoints.push_back(closestPoint[1]);
+        //_collidedVertices.push_back(x);
+        //_collidedDeltas.push_back(delta[0]);
+        //_collidedDeltas.push_back(delta[1]);
+        //_collidedNormals.push_back(normal[0]);
+        //_collidedNormals.push_back(normal[1]);
+        //_signedDistances.push_back(squares[s].signedDistance(vertices[x]));
+      //}
+    //}
+  //}
+
+  //cout << " Found " << _collidedVertices.size() << " vertex collisions " << endl;
+//}
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////
 // build the mass matrix based on the one-ring volumes

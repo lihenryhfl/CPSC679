@@ -52,6 +52,7 @@ REAL poissonsRatio = 0.45;
 //REAL youngsModulus = 1.0;
 //REAL youngsModulus = 5.0;
 REAL youngsModulus = 10.0;
+//REAL youngsModulus = 25.0;
 
 TRIANGLE_MESH* triangleMesh = NULL;
 TIMESTEPPER* integrator = NULL;
@@ -265,6 +266,9 @@ void glutIdle()
 {
   if (animate)
   {
+    cout << "========================================================= " << endl;
+    cout << "  BEGINNING FRAME COMPUTATION" << endl;
+    cout << "========================================================= " << endl;
     static int frame = 0;
     integrator->clearExternalForces();
     VECTOR2 gravity(0.0, -1);
@@ -555,12 +559,13 @@ void readSquare2()
   square.translation() = centers.back();
   squares.push_back(square);
 
-  //center = VECTOR2(0.0, -7.125);
-  //centers.push_back(center);
-  //square.translation() = centers.back();
-  //square.scale() = MATRIX2::Identity() * 6.0;
-  //square.rotation() = Eigen::Rotation2D<REAL>(0.0).toRotationMatrix();
-  //squares.push_back(square);
+  center = VECTOR2(0.0, -7.125);
+  centers.push_back(center);
+  square.translation() = centers.back();
+  square.scale() = MATRIX2::Identity() * 6.0;
+  square.scaleInverse() = square.scale().inverse();
+  square.rotation() = Eigen::Rotation2D<REAL>(0.0).toRotationMatrix();
+  squares.push_back(square);
   //eyeCenter = VECTOR3(0.421, 0.446, 1);
   //zoom = 3.75;
   eyeCenter  = VECTOR3(0.544, -3.182,1);
@@ -658,6 +663,7 @@ void readBunny()
   centers.push_back(center);
   square.translation() = centers.back();
   square.scale() = MATRIX2::Identity() * 6.0;
+  square.scaleInverse() = square.scale().inverse();
   square.rotation() = Eigen::Rotation2D<REAL>(0.0).toRotationMatrix();
   squares.push_back(square);
 
@@ -745,8 +751,8 @@ int main(int argc, char** argv)
 {
   cout << " Usage: " << argv[0] << endl;
 
-  //readBunny();
-  readBunny2();
+  readBunny();
+  //readBunny2();
   //readTriangle();
   //readSquare();
   //readSquare2();

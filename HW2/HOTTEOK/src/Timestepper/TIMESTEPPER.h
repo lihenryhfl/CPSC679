@@ -90,6 +90,18 @@ protected:
 
   // what are their normals?
   std::vector<VECTOR2> _collidedNormals;
+
+  // what are their closestPoints?
+  std::vector<VECTOR2> _collidedClosestPoints;
+
+  //// which way do we go, to project to the closest exterior point on the square?
+  //std::vector<REAL> _collidedDeltas;
+
+  //// what are their normals?
+  //std::vector<REAL> _collidedNormals;
+
+  //// what are their closestPoints?
+  //std::vector<REAL> _collidedClosestPoints;
 };
 
 #endif

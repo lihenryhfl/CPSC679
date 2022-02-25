@@ -230,11 +230,243 @@ objs/simulator.o: simulator.cpp ../../SETTINGS.h ../../ext/Eigen/Dense \
   ../../ext/Eigen/src/IterativeLinearSolvers/IncompleteCholesky.h \
   ../../src/Geometry/TRIANGLE_MESH.h ../../src/Hyperelastic/MATERIAL.h \
   ../../src/Geometry/SQUARE.h ../../src/Geometry/KINEMATIC_SHAPE.h \
-  ../../src/Hyperelastic/STVK.h ../../src/Timestepper/TIMESTEPPER.h \
+  ../../src/Hyperelastic/STVK.h ../../src/Hyperelastic/SNH.h \
+  ../../src/Timestepper/TIMESTEPPER.h \
   ../../src/Timestepper/BACKWARD_EULER.h ../../src/util/FFMPEG_MOVIE.h
 objs/STVK.o: ../../src/Hyperelastic/STVK.cpp \
   ../../src/Hyperelastic/STVK.h ../../src/Hyperelastic/MATERIAL.h \
   ../../SETTINGS.h ../../ext/Eigen/Dense ../../ext/Eigen/Core \
+  ../../ext/Eigen/src/Core/util/DisableStupidWarnings.h \
+  ../../ext/Eigen/src/Core/util/Macros.h \
+  ../../ext/Eigen/src/Core/util/MKL_support.h \
+  ../../ext/Eigen/src/Core/util/Constants.h \
+  ../../ext/Eigen/src/Core/util/Meta.h \
+  ../../ext/Eigen/src/Core/util/ForwardDeclarations.h \
+  ../../ext/Eigen/src/Core/util/StaticAssert.h \
+  ../../ext/Eigen/src/Core/util/XprHelper.h \
+  ../../ext/Eigen/src/Core/util/Memory.h \
+  ../../ext/Eigen/src/Core/NumTraits.h \
+  ../../ext/Eigen/src/Core/MathFunctions.h \
+  ../../ext/Eigen/src/Core/GenericPacketMath.h \
+  ../../ext/Eigen/src/Core/MathFunctionsImpl.h \
+  ../../ext/Eigen/src/Core/arch/Default/ConjHelper.h \
+  ../../ext/Eigen/src/Core/arch/SSE/PacketMath.h \
+  ../../ext/Eigen/src/Core/arch/SSE/MathFunctions.h \
+  ../../ext/Eigen/src/Core/arch/SSE/Complex.h \
+  ../../ext/Eigen/src/Core/arch/SSE/TypeCasting.h \
+  ../../ext/Eigen/src/Core/arch/CUDA/Half.h \
+  ../../ext/Eigen/src/Core/arch/CUDA/PacketMathHalf.h \
+  ../../ext/Eigen/src/Core/arch/CUDA/TypeCasting.h \
+  ../../ext/Eigen/src/Core/arch/Default/Settings.h \
+  ../../ext/Eigen/src/Core/functors/TernaryFunctors.h \
+  ../../ext/Eigen/src/Core/functors/BinaryFunctors.h \
+  ../../ext/Eigen/src/Core/functors/UnaryFunctors.h \
+  ../../ext/Eigen/src/Core/functors/NullaryFunctors.h \
+  ../../ext/Eigen/src/Core/functors/StlFunctors.h \
+  ../../ext/Eigen/src/Core/functors/AssignmentFunctors.h \
+  ../../ext/Eigen/src/Core/arch/CUDA/Complex.h \
+  ../../ext/Eigen/src/Core/IO.h \
+  ../../ext/Eigen/src/Core/DenseCoeffsBase.h \
+  ../../ext/Eigen/src/Core/DenseBase.h \
+  ../../ext/Eigen/src/Core/../plugins/BlockMethods.h \
+  ../../ext/Eigen/src/Core/MatrixBase.h \
+  ../../ext/Eigen/src/Core/../plugins/CommonCwiseUnaryOps.h \
+  ../../ext/Eigen/src/Core/../plugins/CommonCwiseBinaryOps.h \
+  ../../ext/Eigen/src/Core/../plugins/MatrixCwiseUnaryOps.h \
+  ../../ext/Eigen/src/Core/../plugins/MatrixCwiseBinaryOps.h \
+  ../../ext/Eigen/src/Core/EigenBase.h \
+  ../../ext/Eigen/src/Core/Product.h \
+  ../../ext/Eigen/src/Core/CoreEvaluators.h \
+  ../../ext/Eigen/src/Core/AssignEvaluator.h \
+  ../../ext/Eigen/src/Core/Assign.h ../../ext/Eigen/src/Core/ArrayBase.h \
+  ../../ext/Eigen/src/Core/../plugins/ArrayCwiseUnaryOps.h \
+  ../../ext/Eigen/src/Core/../plugins/ArrayCwiseBinaryOps.h \
+  ../../ext/Eigen/src/Core/util/BlasUtil.h \
+  ../../ext/Eigen/src/Core/DenseStorage.h \
+  ../../ext/Eigen/src/Core/NestByValue.h \
+  ../../ext/Eigen/src/Core/ReturnByValue.h \
+  ../../ext/Eigen/src/Core/NoAlias.h \
+  ../../ext/Eigen/src/Core/PlainObjectBase.h \
+  ../../ext/Eigen/src/Core/Matrix.h ../../ext/Eigen/src/Core/Array.h \
+  ../../ext/Eigen/src/Core/CwiseTernaryOp.h \
+  ../../ext/Eigen/src/Core/CwiseBinaryOp.h \
+  ../../ext/Eigen/src/Core/CwiseUnaryOp.h \
+  ../../ext/Eigen/src/Core/CwiseNullaryOp.h \
+  ../../ext/Eigen/src/Core/CwiseUnaryView.h \
+  ../../ext/Eigen/src/Core/SelfCwiseBinaryOp.h \
+  ../../ext/Eigen/src/Core/Dot.h ../../ext/Eigen/src/Core/StableNorm.h \
+  ../../ext/Eigen/src/Core/Stride.h ../../ext/Eigen/src/Core/MapBase.h \
+  ../../ext/Eigen/src/Core/Map.h ../../ext/Eigen/src/Core/Ref.h \
+  ../../ext/Eigen/src/Core/Block.h \
+  ../../ext/Eigen/src/Core/VectorBlock.h \
+  ../../ext/Eigen/src/Core/Transpose.h \
+  ../../ext/Eigen/src/Core/DiagonalMatrix.h \
+  ../../ext/Eigen/src/Core/Diagonal.h \
+  ../../ext/Eigen/src/Core/DiagonalProduct.h \
+  ../../ext/Eigen/src/Core/Redux.h ../../ext/Eigen/src/Core/Visitor.h \
+  ../../ext/Eigen/src/Core/Fuzzy.h ../../ext/Eigen/src/Core/Swap.h \
+  ../../ext/Eigen/src/Core/CommaInitializer.h \
+  ../../ext/Eigen/src/Core/GeneralProduct.h \
+  ../../ext/Eigen/src/Core/Solve.h ../../ext/Eigen/src/Core/Inverse.h \
+  ../../ext/Eigen/src/Core/SolverBase.h \
+  ../../ext/Eigen/src/Core/PermutationMatrix.h \
+  ../../ext/Eigen/src/Core/Transpositions.h \
+  ../../ext/Eigen/src/Core/TriangularMatrix.h \
+  ../../ext/Eigen/src/Core/SelfAdjointView.h \
+  ../../ext/Eigen/src/Core/products/GeneralBlockPanelKernel.h \
+  ../../ext/Eigen/src/Core/products/Parallelizer.h \
+  ../../ext/Eigen/src/Core/ProductEvaluators.h \
+  ../../ext/Eigen/src/Core/products/GeneralMatrixVector.h \
+  ../../ext/Eigen/src/Core/products/GeneralMatrixMatrix.h \
+  ../../ext/Eigen/src/Core/SolveTriangular.h \
+  ../../ext/Eigen/src/Core/products/GeneralMatrixMatrixTriangular.h \
+  ../../ext/Eigen/src/Core/products/SelfadjointMatrixVector.h \
+  ../../ext/Eigen/src/Core/products/SelfadjointMatrixMatrix.h \
+  ../../ext/Eigen/src/Core/products/SelfadjointProduct.h \
+  ../../ext/Eigen/src/Core/products/SelfadjointRank2Update.h \
+  ../../ext/Eigen/src/Core/products/TriangularMatrixVector.h \
+  ../../ext/Eigen/src/Core/products/TriangularMatrixMatrix.h \
+  ../../ext/Eigen/src/Core/products/TriangularSolverMatrix.h \
+  ../../ext/Eigen/src/Core/products/TriangularSolverVector.h \
+  ../../ext/Eigen/src/Core/BandMatrix.h \
+  ../../ext/Eigen/src/Core/CoreIterators.h \
+  ../../ext/Eigen/src/Core/ConditionEstimator.h \
+  ../../ext/Eigen/src/Core/BooleanRedux.h \
+  ../../ext/Eigen/src/Core/Select.h \
+  ../../ext/Eigen/src/Core/VectorwiseOp.h \
+  ../../ext/Eigen/src/Core/Random.h ../../ext/Eigen/src/Core/Replicate.h \
+  ../../ext/Eigen/src/Core/Reverse.h \
+  ../../ext/Eigen/src/Core/ArrayWrapper.h \
+  ../../ext/Eigen/src/Core/GlobalFunctions.h \
+  ../../ext/Eigen/src/Core/util/ReenableStupidWarnings.h \
+  ../../ext/Eigen/LU ../../ext/Eigen/src/misc/Kernel.h \
+  ../../ext/Eigen/src/misc/Image.h ../../ext/Eigen/src/LU/FullPivLU.h \
+  ../../ext/Eigen/src/LU/PartialPivLU.h \
+  ../../ext/Eigen/src/LU/Determinant.h \
+  ../../ext/Eigen/src/LU/InverseImpl.h \
+  ../../ext/Eigen/src/LU/arch/Inverse_SSE.h ../../ext/Eigen/Cholesky \
+  ../../ext/Eigen/Jacobi ../../ext/Eigen/src/Jacobi/Jacobi.h \
+  ../../ext/Eigen/src/Cholesky/LLT.h ../../ext/Eigen/src/Cholesky/LDLT.h \
+  ../../ext/Eigen/QR ../../ext/Eigen/Householder \
+  ../../ext/Eigen/src/Householder/Householder.h \
+  ../../ext/Eigen/src/Householder/HouseholderSequence.h \
+  ../../ext/Eigen/src/Householder/BlockHouseholder.h \
+  ../../ext/Eigen/src/QR/HouseholderQR.h \
+  ../../ext/Eigen/src/QR/FullPivHouseholderQR.h \
+  ../../ext/Eigen/src/QR/ColPivHouseholderQR.h \
+  ../../ext/Eigen/src/QR/CompleteOrthogonalDecomposition.h \
+  ../../ext/Eigen/SVD ../../ext/Eigen/src/misc/RealSvd2x2.h \
+  ../../ext/Eigen/src/SVD/UpperBidiagonalization.h \
+  ../../ext/Eigen/src/SVD/SVDBase.h ../../ext/Eigen/src/SVD/JacobiSVD.h \
+  ../../ext/Eigen/src/SVD/BDCSVD.h ../../ext/Eigen/Geometry \
+  ../../ext/Eigen/src/Geometry/OrthoMethods.h \
+  ../../ext/Eigen/src/Geometry/EulerAngles.h \
+  ../../ext/Eigen/src/Geometry/Homogeneous.h \
+  ../../ext/Eigen/src/Geometry/RotationBase.h \
+  ../../ext/Eigen/src/Geometry/Rotation2D.h \
+  ../../ext/Eigen/src/Geometry/Quaternion.h \
+  ../../ext/Eigen/src/Geometry/AngleAxis.h \
+  ../../ext/Eigen/src/Geometry/Transform.h \
+  ../../ext/Eigen/src/Geometry/Translation.h \
+  ../../ext/Eigen/src/Geometry/Scaling.h \
+  ../../ext/Eigen/src/Geometry/Hyperplane.h \
+  ../../ext/Eigen/src/Geometry/ParametrizedLine.h \
+  ../../ext/Eigen/src/Geometry/AlignedBox.h \
+  ../../ext/Eigen/src/Geometry/Umeyama.h \
+  ../../ext/Eigen/src/Geometry/arch/Geometry_SSE.h \
+  ../../ext/Eigen/Eigenvalues \
+  ../../ext/Eigen/src/Eigenvalues/Tridiagonalization.h \
+  ../../ext/Eigen/src/Eigenvalues/RealSchur.h \
+  ../../ext/Eigen/src/Eigenvalues/./HessenbergDecomposition.h \
+  ../../ext/Eigen/src/Eigenvalues/EigenSolver.h \
+  ../../ext/Eigen/src/Eigenvalues/./RealSchur.h \
+  ../../ext/Eigen/src/Eigenvalues/SelfAdjointEigenSolver.h \
+  ../../ext/Eigen/src/Eigenvalues/./Tridiagonalization.h \
+  ../../ext/Eigen/src/Eigenvalues/GeneralizedSelfAdjointEigenSolver.h \
+  ../../ext/Eigen/src/Eigenvalues/HessenbergDecomposition.h \
+  ../../ext/Eigen/src/Eigenvalues/ComplexSchur.h \
+  ../../ext/Eigen/src/Eigenvalues/ComplexEigenSolver.h \
+  ../../ext/Eigen/src/Eigenvalues/./ComplexSchur.h \
+  ../../ext/Eigen/src/Eigenvalues/RealQZ.h \
+  ../../ext/Eigen/src/Eigenvalues/GeneralizedEigenSolver.h \
+  ../../ext/Eigen/src/Eigenvalues/./RealQZ.h \
+  ../../ext/Eigen/src/Eigenvalues/MatrixBaseEigenvalues.h \
+  ../../ext/Eigen/Sparse ../../ext/Eigen/SparseCore \
+  ../../ext/Eigen/src/SparseCore/SparseUtil.h \
+  ../../ext/Eigen/src/SparseCore/SparseMatrixBase.h \
+  ../../ext/Eigen/src/SparseCore/../plugins/CommonCwiseUnaryOps.h \
+  ../../ext/Eigen/src/SparseCore/../plugins/CommonCwiseBinaryOps.h \
+  ../../ext/Eigen/src/SparseCore/../plugins/MatrixCwiseUnaryOps.h \
+  ../../ext/Eigen/src/SparseCore/../plugins/MatrixCwiseBinaryOps.h \
+  ../../ext/Eigen/src/SparseCore/../plugins/BlockMethods.h \
+  ../../ext/Eigen/src/SparseCore/SparseAssign.h \
+  ../../ext/Eigen/src/SparseCore/CompressedStorage.h \
+  ../../ext/Eigen/src/SparseCore/AmbiVector.h \
+  ../../ext/Eigen/src/SparseCore/SparseCompressedBase.h \
+  ../../ext/Eigen/src/SparseCore/SparseMatrix.h \
+  ../../ext/Eigen/src/SparseCore/SparseMap.h \
+  ../../ext/Eigen/src/SparseCore/MappedSparseMatrix.h \
+  ../../ext/Eigen/src/SparseCore/SparseVector.h \
+  ../../ext/Eigen/src/SparseCore/SparseRef.h \
+  ../../ext/Eigen/src/SparseCore/SparseCwiseUnaryOp.h \
+  ../../ext/Eigen/src/SparseCore/SparseCwiseBinaryOp.h \
+  ../../ext/Eigen/src/SparseCore/SparseTranspose.h \
+  ../../ext/Eigen/src/SparseCore/SparseBlock.h \
+  ../../ext/Eigen/src/SparseCore/SparseDot.h \
+  ../../ext/Eigen/src/SparseCore/SparseRedux.h \
+  ../../ext/Eigen/src/SparseCore/SparseView.h \
+  ../../ext/Eigen/src/SparseCore/SparseDiagonalProduct.h \
+  ../../ext/Eigen/src/SparseCore/ConservativeSparseSparseProduct.h \
+  ../../ext/Eigen/src/SparseCore/SparseSparseProductWithPruning.h \
+  ../../ext/Eigen/src/SparseCore/SparseProduct.h \
+  ../../ext/Eigen/src/SparseCore/SparseDenseProduct.h \
+  ../../ext/Eigen/src/SparseCore/SparseSelfAdjointView.h \
+  ../../ext/Eigen/src/SparseCore/SparseTriangularView.h \
+  ../../ext/Eigen/src/SparseCore/TriangularSolver.h \
+  ../../ext/Eigen/src/SparseCore/SparsePermutation.h \
+  ../../ext/Eigen/src/SparseCore/SparseFuzzy.h \
+  ../../ext/Eigen/src/SparseCore/SparseSolverBase.h \
+  ../../ext/Eigen/OrderingMethods \
+  ../../ext/Eigen/src/OrderingMethods/Amd.h \
+  ../../ext/Eigen/src/OrderingMethods/../Core/util/NonMPL2.h \
+  ../../ext/Eigen/src/OrderingMethods/Ordering.h \
+  ../../ext/Eigen/src/OrderingMethods/Eigen_Colamd.h \
+  ../../ext/Eigen/SparseCholesky \
+  ../../ext/Eigen/src/SparseCholesky/SimplicialCholesky.h \
+  ../../ext/Eigen/src/SparseCholesky/SimplicialCholesky_impl.h \
+  ../../ext/Eigen/src/SparseCholesky/../Core/util/NonMPL2.h \
+  ../../ext/Eigen/SparseLU \
+  ../../ext/Eigen/src/SparseLU/SparseLU_gemm_kernel.h \
+  ../../ext/Eigen/src/SparseLU/SparseLU_Structs.h \
+  ../../ext/Eigen/src/SparseLU/SparseLU_SupernodalMatrix.h \
+  ../../ext/Eigen/src/SparseLU/SparseLUImpl.h \
+  ../../ext/Eigen/src/SparseCore/SparseColEtree.h \
+  ../../ext/Eigen/src/SparseLU/SparseLU_Memory.h \
+  ../../ext/Eigen/src/SparseLU/SparseLU_heap_relax_snode.h \
+  ../../ext/Eigen/src/SparseLU/SparseLU_relax_snode.h \
+  ../../ext/Eigen/src/SparseLU/SparseLU_pivotL.h \
+  ../../ext/Eigen/src/SparseLU/SparseLU_panel_dfs.h \
+  ../../ext/Eigen/src/SparseLU/SparseLU_kernel_bmod.h \
+  ../../ext/Eigen/src/SparseLU/SparseLU_panel_bmod.h \
+  ../../ext/Eigen/src/SparseLU/SparseLU_column_dfs.h \
+  ../../ext/Eigen/src/SparseLU/SparseLU_column_bmod.h \
+  ../../ext/Eigen/src/SparseLU/SparseLU_copy_to_ucol.h \
+  ../../ext/Eigen/src/SparseLU/SparseLU_pruneL.h \
+  ../../ext/Eigen/src/SparseLU/SparseLU_Utils.h \
+  ../../ext/Eigen/src/SparseLU/SparseLU.h ../../ext/Eigen/SparseQR \
+  ../../ext/Eigen/src/SparseQR/SparseQR.h \
+  ../../ext/Eigen/IterativeLinearSolvers \
+  ../../ext/Eigen/src/IterativeLinearSolvers/SolveWithGuess.h \
+  ../../ext/Eigen/src/IterativeLinearSolvers/IterativeSolverBase.h \
+  ../../ext/Eigen/src/IterativeLinearSolvers/BasicPreconditioners.h \
+  ../../ext/Eigen/src/IterativeLinearSolvers/ConjugateGradient.h \
+  ../../ext/Eigen/src/IterativeLinearSolvers/LeastSquareConjugateGradient.h \
+  ../../ext/Eigen/src/IterativeLinearSolvers/BiCGSTAB.h \
+  ../../ext/Eigen/src/IterativeLinearSolvers/IncompleteLUT.h \
+  ../../ext/Eigen/src/IterativeLinearSolvers/IncompleteCholesky.h
+objs/SNH.o: ../../src/Hyperelastic/SNH.cpp ../../src/Hyperelastic/SNH.h \
+  ../../src/Hyperelastic/MATERIAL.h ../../SETTINGS.h \
+  ../../ext/Eigen/Dense ../../ext/Eigen/Core \
   ../../ext/Eigen/src/Core/util/DisableStupidWarnings.h \
   ../../ext/Eigen/src/Core/util/Macros.h \
   ../../ext/Eigen/src/Core/util/MKL_support.h \

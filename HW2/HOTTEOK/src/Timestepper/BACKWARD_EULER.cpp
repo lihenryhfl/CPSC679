@@ -61,10 +61,9 @@ bool BACKWARD_EULER::solve(const bool verbose)
   }
 
 
-  cout << " Applying " << _collidedVertices.size() << " vertex collisions " << endl;
   VECTOR cp(DOFs);
   cp.setZero();
-  VECTOR2 vertexVelocity, normal, closestPoint, delta;
+  VECTOR2 vertexVelocity;
   MATRIX2 outerProd;
   REAL normalVelocity;
   // apply collided vertex constraints
@@ -73,13 +72,9 @@ bool BACKWARD_EULER::solve(const bool verbose)
     const int pin2 = _collidedVertices[x] * 2;
     vertexVelocity << _velocity[pin2], _velocity[pin2 + 1];
     normalVelocity = _collidedNormals[x].transpose() * vertexVelocity;
-    //normal = VECTOR2(_collidedNormals[x * 2], _collidedNormals[x * 2 + 1]);
-    //normalVelocity = normal.transpose() * vertexVelocity;
-    //if (_signedDistances[x] < -0.05 ||  normalVelocity < 0)
     if (normalVelocity < 0)
-    //if (true)
     {
-      cout << "RUNNING COLLISION CODE" << endl;
+      //cout << "RUNNING COLLISION CODE" << endl;
       outerProd = (_collidedNormals[x] * _collidedNormals[x].transpose());
       filter(pin2, pin2) -= outerProd(0, 0);
       filter(pin2 + 1, pin2) -= outerProd(1, 0);
@@ -87,37 +82,8 @@ bool BACKWARD_EULER::solve(const bool verbose)
       filter(pin2 + 1, pin2 + 1) -= outerProd(1, 1);
       z(pin2) = _collidedDeltas[x][0];
       z(pin2 + 1) = _collidedDeltas[x][1];
-      //cout << " integrator delta norm " << _collidedDeltas[x].norm() << endl;
-      //cout << " integrator vertices + delta" << _position(pin2) + z(pin2) << " " << _position(pin2 + 1) + z(pin2 + 1) << endl;
-
-      cp(pin2) = _collidedClosestPoints[x][0];
-      cp(pin2 + 1) = _collidedClosestPoints[x][1];
-      //delta = VECTOR2(_collidedDeltas[x * 2], _collidedDeltas[x * 2 + 1]);
-      //closestPoint = VECTOR2(_collidedClosestPoints[x * 2], _collidedClosestPoints[x * 2 + 1]);
-      //outerProd = (normal * normal.transpose());
-      //filter(pin2, pin2) -= outerProd(0, 0);
-      //filter(pin2 + 1, pin2) -= outerProd(1, 0);
-      //filter(pin2, pin2 + 1) -= outerProd(0, 1);
-      //filter(pin2 + 1, pin2 + 1) -= outerProd(1, 1);
-      //z(pin2) = delta[0];
-      //z(pin2 + 1) = delta[1];
-      //cout << " integrator delta norm " << delta.norm() << endl;
-      //cout << " integrator delta " << delta[0] << " " << delta[1] << endl;
-      //cout << " integrator vertices + delta " << _position(pin2) + z(pin2) << " " << _position(pin2 + 1) + z(pin2 + 1) << endl;
-
-      //cp(pin2) = closestPoint[0];
-      //cp(pin2 + 1) = closestPoint[1];
     }
   }
-
-  //cout << filter << endl;
-  //cout << z << endl;
-  //cout << _position << endl;
-  //cout << "------------------------" << endl;
-  //cout << _position + z << endl;
-  //cout << "------------------------" << endl;
-  //cout << cp << endl;
-  //cout << _position << endl;
 
   MATRIX dfdx = _triangleMesh.computeStiffnessMatrix(&_hyperelastic);
   MATRIX A = _M - (_dt * _dt) * dfdx;
@@ -125,19 +91,9 @@ bool BACKWARD_EULER::solve(const bool verbose)
   VECTOR b = (_dt * _dt) * (fInternal + _externalForces) + _dt * _M * _velocity;
   VECTOR b_ = filter * (b - A * z);
   VECTOR y = A_.colPivHouseholderQr().solve(b_);
-  //VECTOR y = A.inverse() * b_;
 
-  VECTOR zeros = filter * y;
-  cout << " Sy norm should be zero! " << zeros.norm() << endl;
-  //for (unsigned int x = 0; x < _collidedVertices.size(); x++)
-  //{
-    //const int pin2 = _collidedVertices[x] * 2;
-    //if (true)
-    //{
-      //b_(pin2) = _collidedDeltas[x][0];
-      //b_(pin2 + 1) = _collidedDeltas[x][1];
-    //}
-  //}
+  //VECTOR zeros = filter * y;
+  //cout << " Sy norm should be zero! " << zeros.norm() << endl;
 
   VECTOR update = y + z;
 

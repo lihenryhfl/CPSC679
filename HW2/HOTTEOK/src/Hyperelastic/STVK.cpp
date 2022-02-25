@@ -14,6 +14,7 @@ STVK::STVK(const REAL mu, const REAL lambda) :
 MATRIX STVK::PK1(const MATRIX2& F) const
 {
   return F * PK2(F);
+  //return PK2(F) * F;
 }
 
 ///////////////////////////////////////////////////////////////////////
@@ -63,7 +64,7 @@ MATRIX STVK::DFSDF(const MATRIX& S) const
 
   result(2,0) = S(0,1);
   result(3,1) = S(0,1);
-  
+
   result(0,2) = S(1,0);
   result(1,3) = S(1,0);
 
@@ -113,7 +114,7 @@ MATRIX STVK::computeDEDF(const MATRIX2& F) const
   result(1,2) = f00;
   result(2,2) = f00;
   result(3,2) = 2.0 * f01;
-  
+
   result(0,3) = 0.0;
   result(1,3) = f10;
   result(2,3) = f10;
@@ -151,5 +152,5 @@ MATRIX STVK::blockDiag(const MATRIX& A, const int repeats) const
 REAL STVK::psi(const MATRIX2& F) const
 {
   MATRIX2 E = 0.5 * (F.transpose() * F - MATRIX2::Identity());
-  return _mu * E.squaredNorm() + _lambda * 0.5 * pow(E.trace(), 2.0); 
+  return _mu * E.squaredNorm() + _lambda * 0.5 * pow(E.trace(), 2.0);
 }

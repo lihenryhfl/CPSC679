@@ -16,6 +16,7 @@
 #include "Geometry/TRIANGLE_MESH.h"
 #include "Geometry/SQUARE.h"
 #include "Hyperelastic/STVK.h"
+#include "Hyperelastic/SNH.h"
 #include "Timestepper/TIMESTEPPER.h"
 //#include "Timestepper/FORWARD_EULER.h"
 #include "Timestepper/BACKWARD_EULER.h"
@@ -53,6 +54,7 @@ REAL poissonsRatio = 0.45;
 //REAL youngsModulus = 5.0;
 REAL youngsModulus = 10.0;
 //REAL youngsModulus = 25.0;
+//REAL youngsModulus = 50.0;
 
 TRIANGLE_MESH* triangleMesh = NULL;
 TIMESTEPPER* integrator = NULL;
@@ -271,7 +273,9 @@ void glutIdle()
     cout << "========================================================= " << endl;
     static int frame = 0;
     integrator->clearExternalForces();
-    VECTOR2 gravity(0.0, -1);
+    //VECTOR2 gravity(0.0, -1);
+    VECTOR2 gravity(0.0, -4);
+    //VECTOR2 gravity(0.0, -0.5);
     //VECTOR2 gravity(0.0, 0);
     integrator->addGravity(gravity);
     integrator->findCollidedVertices(squares);
@@ -478,7 +482,8 @@ void readSquare()
 
   const REAL mu     = MATERIAL::computeMu(youngsModulus, poissonsRatio);
   const REAL lambda = MATERIAL::computeLambda(youngsModulus, poissonsRatio);
-  material = new STVK(mu, lambda);
+  //material = new STVK(mu, lambda);
+  material = new SNH(mu, lambda);
   //integrator = new FORWARD_EULER(*triangleMesh, *material);
   integrator = new BACKWARD_EULER(*triangleMesh, *material);
   //integrator->dt() = 1.0 / 30.0;
@@ -517,7 +522,8 @@ void readSquare2()
 
   const REAL mu     = MATERIAL::computeMu(youngsModulus, poissonsRatio);
   const REAL lambda = MATERIAL::computeLambda(youngsModulus, poissonsRatio);
-  material = new STVK(mu, lambda);
+  //material = new STVK(mu, lambda);
+  material = new SNH(mu, lambda);
   //integrator = new FORWARD_EULER(*triangleMesh, *material);
   integrator = new BACKWARD_EULER(*triangleMesh, *material);
   //integrator->dt() = 1.0 / 30.0;
@@ -596,7 +602,8 @@ void readTriangle()
   triangleMesh = new TRIANGLE_MESH(nodes, triangles);
   const REAL mu     = MATERIAL::computeMu(youngsModulus, poissonsRatio);
   const REAL lambda = MATERIAL::computeLambda(youngsModulus, poissonsRatio);
-  material = new STVK(mu, lambda);
+  //material = new STVK(mu, lambda);
+  material = new SNH(mu, lambda);
   //integrator = new FORWARD_EULER(*triangleMesh, *material);
   integrator = new BACKWARD_EULER(*triangleMesh, *material);
 }
@@ -613,7 +620,8 @@ void readBunny()
   const REAL mu     = MATERIAL::computeMu(youngsModulus, poissonsRatio);
   const REAL lambda = MATERIAL::computeLambda(youngsModulus, poissonsRatio);
   cout << " Mu: " << mu << " Lambda: " << lambda << endl;
-  material = new STVK(mu, lambda);
+  //material = new STVK(mu, lambda);
+  material = new SNH(mu, lambda);
   //integrator = new FORWARD_EULER(*triangleMesh, *material);
   integrator = new BACKWARD_EULER(*triangleMesh, *material);
   //integrator->dt() = 1.0 / 30.0;
@@ -683,13 +691,14 @@ void readBunny2()
   const REAL mu     = MATERIAL::computeMu(youngsModulus, poissonsRatio);
   const REAL lambda = MATERIAL::computeLambda(youngsModulus, poissonsRatio);
   cout << " Mu: " << mu << " Lambda: " << lambda << endl;
-  material = new STVK(mu, lambda);
+  //material = new STVK(mu, lambda);
+  material = new SNH(mu, lambda);
   //integrator = new FORWARD_EULER(*triangleMesh, *material);
   integrator = new BACKWARD_EULER(*triangleMesh, *material);
   //integrator->dt() = 1.0 / 30.0;
 
   // pin down the vertices inside the ceiling
-  //integrator->applyPinConstraints(ceiling);
+  integrator->applyPinConstraints(ceiling);
   below.rotation() = Eigen::Rotation2D<REAL>(M_PI / 4.0).toRotationMatrix();
 
   squares.reserve(10);
@@ -751,8 +760,8 @@ int main(int argc, char** argv)
 {
   cout << " Usage: " << argv[0] << endl;
 
-  readBunny();
-  //readBunny2();
+  //readBunny();
+  readBunny2();
   //readTriangle();
   //readSquare();
   //readSquare2();

@@ -12,6 +12,7 @@ std::uniform_real_distribution<REAL> dist(0.0, 1.0);
 #include "Geometry/TRIANGLE_MESH.h"
 #include "Geometry/SQUARE.h"
 #include "Hyperelastic/STVK.h"
+#include "Hyperelastic/SNH.h"
 #include "Timestepper/TIMESTEPPER.h"
 #include "Timestepper/FORWARD_EULER.h"
 
@@ -162,7 +163,7 @@ bool convergenceTestHessian(const MATERIAL* material, const MATRIX2 &F)
 }
 
 ///////////////////////////////////////////////////////////////////////
-// Let's make some random displacements 
+// Let's make some random displacements
 ///////////////////////////////////////////////////////////////////////
 VECTOR randomVector(const int DOFs, const REAL scaling)
 {
@@ -205,7 +206,7 @@ bool convergenceTestK(const MATERIAL* material, TRIANGLE_MESH& mesh)
   while (eps > 1e-8)
   {
     MATRIX finiteDiff(DOFs, DOFs);
-    
+
     // for each of the degrees of the freedom
     for (int x = 0; x < DOFs; x++)
     {
@@ -279,10 +280,11 @@ MATRIX2 randomMatrix2(const REAL scaling)
 int main(int argc, char** argv)
 {
   MATRIX2 F = randomMatrix2(10.0);
-  STVK stvk(1.0, 1.0);
+  //STVK stvk(1.0, 1.0);
+  SNH stvk(1.0, 1.0);
   convergenceTestPK1(&stvk, F);
   convergenceTestHessian(&stvk, F);
-  
+
   // build a square mesh
   vector<VECTOR2> nodes;
   vector<VECTOR3I> triangles;

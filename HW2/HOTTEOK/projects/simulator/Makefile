@@ -7,6 +7,7 @@ EXECUTABLE = ../../bin/simulator
 
 SOURCES    = simulator.cpp \
 						 ../../src/Hyperelastic/STVK.cpp \
+						 ../../src/Hyperelastic/SNH.cpp \
 						 ../../src/Timestepper/TIMESTEPPER.cpp \
 						 ../../src/Timestepper/FORWARD_EULER.cpp \
 						 ../../src/Timestepper/BACKWARD_EULER.cpp \

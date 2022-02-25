@@ -1,6 +1,8 @@
 #include "STVK.h"
 #include <iostream>
 
+using namespace std;
+
 STVK::STVK(const REAL mu, const REAL lambda) :
   _mu(mu), _lambda(lambda)
 {
@@ -14,7 +16,6 @@ STVK::STVK(const REAL mu, const REAL lambda) :
 MATRIX STVK::PK1(const MATRIX2& F) const
 {
   return F * PK2(F);
-  //return PK2(F) * F;
 }
 
 ///////////////////////////////////////////////////////////////////////
@@ -152,5 +153,9 @@ MATRIX STVK::blockDiag(const MATRIX& A, const int repeats) const
 REAL STVK::psi(const MATRIX2& F) const
 {
   MATRIX2 E = 0.5 * (F.transpose() * F - MATRIX2::Identity());
-  return _mu * E.squaredNorm() + _lambda * 0.5 * pow(E.trace(), 2.0);
+  const REAL spring_term = _mu * E.squaredNorm();
+  const REAL volume_term = _lambda * 0.5 * pow(E.trace(), 2.0);
+
+  cout << " spring_term: " << spring_term << ", volume_term: " << volume_term << endl;
+  return spring_term + volume_term;
 }

@@ -23,9 +23,9 @@ public:
 
   // get the hyperelastic gradient, negative scaled by area
   VECTOR computeMaterialForces(const MATERIAL* material) const;
-  
+
   // get the hyperelastic hessian, negative scaled by area
-  MATRIX computeStiffnessMatrix(const MATERIAL* material) const;
+  MATRIX computeStiffnessMatrix(const MATERIAL* material, bool unitTest=false) const;
 
   // compute deformation gradients
   void computeFs();

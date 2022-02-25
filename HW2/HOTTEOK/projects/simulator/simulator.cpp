@@ -610,7 +610,6 @@ void readBunny()
   vector<VECTOR2> nodes;
   vector<VECTOR3I> triangles;
 
-  gravityConstant = -0.5;
   loadTriangles2D("./data/bunny/bunny.1", nodes, triangles);
   triangleMesh = new TRIANGLE_MESH(nodes, triangles);
   const REAL mu     = MATERIAL::computeMu(youngsModulus, poissonsRatio);

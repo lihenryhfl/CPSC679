@@ -39,7 +39,7 @@ TRIANGLE_MESH::TRIANGLE_MESH(const std::vector<VECTOR2>& restVertices,
   _staleFs = true;
 }
 
-TRIANGLE_MESH::~TRIANGLE_MESH() 
+TRIANGLE_MESH::~TRIANGLE_MESH()
 {
 }
 
@@ -132,38 +132,38 @@ MATRIX2 TRIANGLE_MESH::pFpx(const int index, const MATRIX2& DmInv)
   {
     result(0,0) = -1;
     result(0,1) = -1;
-    //result << -1, -1, 
+    //result << -1, -1,
     //           0, 0;
   }
   if (index == 1)
   {
     result(1,0) = -1;
     result(1,1) = -1;
-    //result <<  0,  0, 
+    //result <<  0,  0,
     //          -1, -1;
   }
   if (index == 2)
   {
     result(0,0) = 1;
-    //result <<  1, 0, 
+    //result <<  1, 0,
     //           0, 0;
   }
   if (index == 3)
   {
     result(1,0) = 1;
-    //result <<  0, 0, 
+    //result <<  0, 0,
     //           1, 0;
   }
   if (index == 4)
   {
     result(0,1) = 1;
-    //result <<  0, 1, 
+    //result <<  0, 1,
     //           0, 0;
   }
   if (index == 5)
   {
     result(1,1) = 1;
-    //result <<  0, 0, 
+    //result <<  0, 0,
     //           0, 1;
   }
 
@@ -183,6 +183,7 @@ VECTOR TRIANGLE_MESH::computeMaterialForces(const MATERIAL* material) const
   for (unsigned int index = 0; index < _triangles.size(); index++)
   {
     const MATRIX2& F = _Fs[index];
+    material->psi(F);
     const MATRIX2 PK1 = material->PK1(F);
     const VECTOR6 forceDensity = _pFpxs[index].transpose() * flatten(PK1);
     const VECTOR6 force = -_restAreas[index] * forceDensity;
@@ -210,7 +211,7 @@ VECTOR TRIANGLE_MESH::computeMaterialForces(const MATERIAL* material) const
       forces[index + 1] += triForce[2 * x + 1];
     }
   }
-  
+
   return forces;
 }
 
@@ -233,7 +234,7 @@ MATRIX4 clampEigenvalues(const MATRIX4& A)
 ///////////////////////////////////////////////////////////////////////
 // compute the stiffness matrix
 ///////////////////////////////////////////////////////////////////////
-MATRIX TRIANGLE_MESH::computeStiffnessMatrix(const MATERIAL* material) const
+MATRIX TRIANGLE_MESH::computeStiffnessMatrix(const MATERIAL* material, bool unitTest) const
 {
   // you recomputed F, right?
   assert(!_staleFs);
@@ -243,10 +244,13 @@ MATRIX TRIANGLE_MESH::computeStiffnessMatrix(const MATERIAL* material) const
   {
     const MATRIX2& F      = _Fs[i];
     const MATRIX4x6& pFpx = _pFpxs[i];
-    //const MATRIX4 projectedHessian = clampEigenvalues(material->hessian(F));
-    //perElementHessians[i] = -_restAreas[i] * (pFpx.transpose() * projectedHessian) * pFpx;
-    const MATRIX4 hessian = material->hessian(F);
-    perElementHessians[i] = -_restAreas[i] * (pFpx.transpose() * hessian) * pFpx;
+    if (unitTest) {
+      const MATRIX4 hessian = material->hessian(F);
+      perElementHessians[i] = -_restAreas[i] * (pFpx.transpose() * hessian) * pFpx;
+    } else {
+      const MATRIX4 projectedHessian = clampEigenvalues(material->hessian(F));
+      perElementHessians[i] = -_restAreas[i] * (pFpx.transpose() * projectedHessian) * pFpx;
+    }
   }
 
   const int DOFs = _vertices.size() * 2;

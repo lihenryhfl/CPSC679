@@ -1,5 +1,6 @@
 #include "SNH.h"
 #include <iostream>
+using namespace std;
 
 SNH::SNH(const REAL mu, const REAL lambda) :
   _mu(mu), _lambda(lambda), _alpha(1 - mu / lambda)
@@ -60,7 +61,9 @@ REAL SNH::psi(const MATRIX2& F) const
 {
   const REAL Ic = F.squaredNorm();
   const REAL Jminus1 = F.determinant() - _alpha;
-  return 0.5 * (_mu * (Ic - 3.0) + _lambda * Jminus1 * Jminus1);
+  const REAL spring_term = _mu * (Ic - 3.0);
+  const REAL volume_term = _lambda * Jminus1 * Jminus1;
+  return 0.5 * (spring_term + volume_term);
 }
 
 ///////////////////////////////////////////////////////////////////////
@@ -72,7 +75,6 @@ MATRIX SNH::PK1(const MATRIX2& F) const
   const MATRIX2 pJpF = DJDF(F);
   const REAL Jminus1 = F.determinant() - _alpha;
   MATRIX2 _PK1 = _mu * F + _lambda * Jminus1 * pJpF;
-  //std::cout << _PK1 << std::endl;
   return _PK1;
 }
 

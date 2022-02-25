@@ -197,7 +197,7 @@ bool convergenceTestK(const MATERIAL* material, TRIANGLE_MESH& mesh)
 
   mesh.setDisplacement(x0);
   mesh.computeFs();
-  const MATRIX K = mesh.computeStiffnessMatrix(material);
+  const MATRIX K = mesh.computeStiffnessMatrix(material, true);
   const VECTOR f = mesh.computeMaterialForces(material);
 
   double eps = 1e-4;

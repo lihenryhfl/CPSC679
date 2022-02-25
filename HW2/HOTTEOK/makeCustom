@@ -1,0 +1,3 @@
+./bin/svgToPoly ./data/custom/custom.svg ./data/custom/custom.poly
+./bin/triangle -a0.01 ./data/custom/custom.poly 
+#./bin/showme ./data/bunny/bunny.1

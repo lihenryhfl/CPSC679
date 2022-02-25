@@ -55,6 +55,7 @@ REAL poissonsRatio = 0.45;
 REAL youngsModulus = 10.0;
 //REAL youngsModulus = 25.0;
 //REAL youngsModulus = 50.0;
+REAL gravityConstant = -1.0;
 
 TRIANGLE_MESH* triangleMesh = NULL;
 TIMESTEPPER* integrator = NULL;
@@ -268,15 +269,9 @@ void glutIdle()
 {
   if (animate)
   {
-    cout << "========================================================= " << endl;
-    cout << "  BEGINNING FRAME COMPUTATION" << endl;
-    cout << "========================================================= " << endl;
     static int frame = 0;
     integrator->clearExternalForces();
-    //VECTOR2 gravity(0.0, -1);
-    VECTOR2 gravity(0.0, -4);
-    //VECTOR2 gravity(0.0, -0.5);
-    //VECTOR2 gravity(0.0, 0);
+    VECTOR2 gravity(0.0, gravityConstant);
     integrator->addGravity(gravity);
     integrator->findCollidedVertices(squares);
     integrator->solve(true);
@@ -615,6 +610,7 @@ void readBunny()
   vector<VECTOR2> nodes;
   vector<VECTOR3I> triangles;
 
+  gravityConstant = -0.5;
   loadTriangles2D("./data/bunny/bunny.1", nodes, triangles);
   triangleMesh = new TRIANGLE_MESH(nodes, triangles);
   const REAL mu     = MATERIAL::computeMu(youngsModulus, poissonsRatio);
@@ -722,16 +718,6 @@ void readBunny2()
   square.translation() = centers.back();
   squares.push_back(square);
 
-  //center = VECTOR2(-0.5, -2.25);
-  //centers.push_back(center);
-  //square.translation() = centers.back();
-  //squares.push_back(square);
-
-  //center = VECTOR2(0.75, -2.875);
-  //centers.push_back(center);
-  //square.translation() = centers.back();
-  //squares.push_back(square);
-
   center = VECTOR2(leftcenter, -3.0);
   centers.push_back(center);
   square.translation() = centers.back();
@@ -756,15 +742,94 @@ void readBunny2()
 
 ///////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////
+void readCustom()
+{
+  vector<VECTOR2> nodes;
+  vector<VECTOR3I> triangles;
+
+  loadTriangles2D("./data/custom/custom.1", nodes, triangles);
+  triangleMesh = new TRIANGLE_MESH(nodes, triangles);
+  const REAL mu     = MATERIAL::computeMu(youngsModulus, poissonsRatio);
+  const REAL lambda = MATERIAL::computeLambda(youngsModulus, poissonsRatio);
+  cout << " Mu: " << mu << " Lambda: " << lambda << endl;
+  //material = new STVK(mu, lambda);
+  material = new SNH(mu, lambda);
+  //integrator = new FORWARD_EULER(*triangleMesh, *material);
+  integrator = new BACKWARD_EULER(*triangleMesh, *material);
+  //integrator->dt() = 1.0 / 30.0;
+
+  // pin down the vertices inside the ceiling
+  //integrator->applyPinConstraints(ceiling);
+  below.rotation() = Eigen::Rotation2D<REAL>(M_PI / 4.0).toRotationMatrix();
+
+  squares.reserve(10);
+  centers.reserve(10);
+
+  VECTOR2 center(0.35, 0.95);
+  SQUARE square(center, 0.75);
+  square.rotation() = Eigen::Rotation2D<REAL>(M_PI / 4.0).toRotationMatrix();
+
+  center = VECTOR2(-0.5, -1.0);
+  centers.push_back(center);
+  square.translation() = centers.back();
+  squares.push_back(square);
+
+  center = VECTOR2(0.75, -1.625);
+  centers.push_back(center);
+  square.translation() = centers.back();
+  squares.push_back(square);
+
+  center = VECTOR2(-0.5, -2.25);
+  centers.push_back(center);
+  square.translation() = centers.back();
+  squares.push_back(square);
+
+  center = VECTOR2(0.75, -2.875);
+  centers.push_back(center);
+  square.translation() = centers.back();
+  squares.push_back(square);
+
+  center = VECTOR2(-0.5, -3.5);
+  centers.push_back(center);
+  square.translation() = centers.back();
+  squares.push_back(square);
+
+  center = VECTOR2(0.75, -4.125);
+  centers.push_back(center);
+  square.translation() = centers.back();
+  squares.push_back(square);
+
+  center = VECTOR2(0.0, -7.125);
+  centers.push_back(center);
+  square.translation() = centers.back();
+  square.scale() = MATRIX2::Identity() * 6.0;
+  square.scaleInverse() = square.scale().inverse();
+  square.rotation() = Eigen::Rotation2D<REAL>(0.0).toRotationMatrix();
+  squares.push_back(square);
+
+  eyeCenter  = VECTOR3(0.206, -2.231, 1);
+  zoom = 5.516;
+}
+
+
+///////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////
 int main(int argc, char** argv)
 {
   cout << " Usage: " << argv[0] << endl;
 
-  //readBunny();
-  readBunny2();
-  //readTriangle();
-  //readSquare();
-  //readSquare2();
+  if (argc > 1 && !strcmp(argv[1], "CUSTOM")) {
+    cout << "LOADING CUSTOM" << endl;
+    readCustom();
+  }
+  else {
+    cout << "LOADING BUNNY" << endl;
+    readBunny();
+    //readBunny2();
+    //readTriangle();
+    //readSquare();
+    //readSquare2();
+  }
 
   // initialize GLUT and GL
   glutInit(&argc, argv);

@@ -33,14 +33,6 @@ bool BACKWARD_EULER::solve(const bool verbose)
   VECTOR fInternal = _triangleMesh.computeMaterialForces(&_hyperelastic);
   cout << " R norm: " << fInternal.norm() << " _dt: " << _dt << endl;
 
-
-  //VECTOR update = (_dt * _dt) * _Minv * (fInternal + _externalForces + _C * _velocity) + _dt * _velocity;
-
-  //MATRIX dfdx = _triangleMesh.computeStiffnessMatrix(&_hyperelastic);
-  //MATRIX A = _M - (_dt * _dt) * dfdx;
-  //VECTOR b = (_dt * _dt) * (fInternal + _externalForces) + _dt * _M * _velocity;
-  //VECTOR update = A.colPivHouseholderQr().solve(b);
-
   // build filter matrix (S matrix from lecture)
   const int DOFs = _triangleMesh.DOFs();
   MATRIX filter(DOFs, DOFs);
@@ -60,12 +52,10 @@ bool BACKWARD_EULER::solve(const bool verbose)
     z(pin2 + 1) = 0;
   }
 
-
-  VECTOR cp(DOFs);
-  cp.setZero();
   VECTOR2 vertexVelocity;
   MATRIX2 outerProd;
   REAL normalVelocity;
+
   // apply collided vertex constraints
   for (unsigned int x = 0; x < _collidedVertices.size(); x++)
   {
@@ -91,9 +81,6 @@ bool BACKWARD_EULER::solve(const bool verbose)
   VECTOR b = (_dt * _dt) * (fInternal + _externalForces) + _dt * _M * _velocity;
   VECTOR b_ = filter * (b - A * z);
   VECTOR y = A_.colPivHouseholderQr().solve(b_);
-
-  //VECTOR zeros = filter * y;
-  //cout << " Sy norm should be zero! " << zeros.norm() << endl;
 
   VECTOR update = y + z;
 

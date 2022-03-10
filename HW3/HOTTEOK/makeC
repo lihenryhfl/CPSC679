@@ -1,0 +1,3 @@
+./bin/svgToPoly ./data/C/C.svg ./data/C/C.poly
+./bin/triangle -a0.025 ./data/C/C.poly 
+./bin/showme ./data/C/C.1

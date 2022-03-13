@@ -2,8 +2,8 @@
 #include <iostream>
 using namespace std;
 
-SNH::SNH(const REAL mu, const REAL lambda) :
-  _mu(mu), _lambda(lambda), _alpha(1 - mu / lambda)
+SNH::SNH(const REAL mu, const REAL lambda, const REAL eps) :
+  _eps(eps), _mu(mu), _lambda(lambda), _alpha(1 - mu / lambda)
 {
   _name = std::string("SNH");
   _hessJ = makeHessJ();
@@ -40,6 +40,17 @@ MATRIX2 SNH::DJDF(const MATRIX2& F) const
   pJpF(1, 0) = -F(0, 1);
   pJpF(1, 1) = F(0, 0);
   return pJpF;
+}
+
+MATRIX SNH::dtdx(const VECTOR6& x) const
+{
+  MATRIX dtdx = MATRIX(2, 6);
+  dtdx.setZero();
+  dtdx(0, 0) = 1;
+  dtdx(1, 1) = 1;
+  dtdx(0, 2) = -1;
+  dtdx(1, 3) = -1;
+  return dtdx;
 }
 
 VECTOR4 SNH::flatten(const MATRIX2& A) const
@@ -104,6 +115,86 @@ MATRIX SNH::hessian(const MATRIX& F) const
   const VECTOR4 pJpF = flatten(DJDF(F));
   REAL scale = _lambda * (F.determinant() - _alpha);
   return _mu * MATRIX4::Identity() + _lambda * pJpF * pJpF.transpose() + scale * _hessJ;
+}
+
+///////////////////////////////////////////////////////////////////////
+// get the strain energy
+///////////////////////////////////////////////////////////////////////
+REAL SNH::psi(const MATRIX2& F) const
+{
+  const REAL Ic = F.squaredNorm();
+  const REAL Jminus1 = F.determinant() - _alpha;
+  const REAL spring_term = _mu * (Ic - 3.0);
+  const REAL volume_term = _lambda * Jminus1 * Jminus1;
+  return 0.5 * (spring_term + volume_term);
+}
+
+///////////////////////////////////////////////////////////////////////
+// P = first Piola-Kirchoff stress tensor
+// P = F * S
+///////////////////////////////////////////////////////////////////////
+MATRIX SNH::PK1(const MATRIX2& F) const
+{
+  const MATRIX2 pJpF = DJDF(F);
+  const REAL Jminus1 = F.determinant() - _alpha;
+  MATRIX2 _PK1 = _mu * F + _lambda * Jminus1 * pJpF;
+  return _PK1;
+}
+
+///////////////////////////////////////////////////////////////////////
+// collision energy
+///////////////////////////////////////////////////////////////////////
+REAL SNH::cpsi(const VECTOR6& x) const
+{
+  VECTOR2 x0, x1, x2, n, t;
+  x0 << x[0], x[1];
+  x1 << x[2], x[3];
+  x2 << x[4], x[5];
+  n = normal(x);
+  t = x0 - x1;
+  return _mu * pow((n.transpose() * t - _eps), 2);
+}
+
+///////////////////////////////////////////////////////////////////////
+// first Piola-Kirchoff tensor of collision energy
+///////////////////////////////////////////////////////////////////////
+MATRIX SNH::cPK1(const VECTOR6& x) const
+{
+  MATRIX g = MATRIX(1, 6);
+  VECTOR2 x0, x1, x2, n, t;
+  x0 << x[0], x[1];
+  x1 << x[2], x[3];
+  x2 << x[4], x[5];
+  n = normal(x);
+  t = x0 - x1;
+  g = n.transpose() * dtdx(x) + t.transpose() * normalJacobian(x);
+  return 2 * _mu * (n.transpose() * t - _eps) * g;
+}
+
+///////////////////////////////////////////////////////////////////////
+// hessian of collision energy
+///////////////////////////////////////////////////////////////////////
+MATRIX SNH::cHessian(const VECTOR6& x) const
+{
+  MATRIX H = MATRIX(6, 6);
+  MATRIX g, JnJt;
+  MATRIX nHessian = normalHessian(x);
+  VECTOR2 x0, x1, x2, n, t;
+  x0 << x[0], x[1];
+  x1 << x[2], x[3];
+  x2 << x[4], x[5];
+  n = normal(x);
+  t = x0 - x1;
+  g = n.transpose() * dtdx(x) + t.transpose() * normalJacobian(x);
+  JnJt = dtdx(x).transpose() * normalJacobian(x);
+
+  // compute t * nHessian tensor product
+  nHessian = t.transpose() * reshape(nHessian, 2, 36);
+  nHessian = reshape(nHessian, 6, 6);
+
+  H = nHessian + JnJt + JnJt.transpose();
+  H = H * (t.transpose() * n - _eps) + g.transpose() * g;
+  return 2 * _mu * H;
 }
 
 ///////////////////////////////////////////////////////////////////////
@@ -218,29 +309,5 @@ VECTOR2 SNH::normal(const VECTOR6& x) const
   n = _R * (x2 - x1);
   n = n / n.norm();
   return n;
-}
-
-///////////////////////////////////////////////////////////////////////
-// get the strain energy
-///////////////////////////////////////////////////////////////////////
-REAL SNH::psi(const MATRIX2& F) const
-{
-  const REAL Ic = F.squaredNorm();
-  const REAL Jminus1 = F.determinant() - _alpha;
-  const REAL spring_term = _mu * (Ic - 3.0);
-  const REAL volume_term = _lambda * Jminus1 * Jminus1;
-  return 0.5 * (spring_term + volume_term);
-}
-
-///////////////////////////////////////////////////////////////////////
-// P = first Piola-Kirchoff stress tensor
-// P = F * S
-///////////////////////////////////////////////////////////////////////
-MATRIX SNH::PK1(const MATRIX2& F) const
-{
-  const MATRIX2 pJpF = DJDF(F);
-  const REAL Jminus1 = F.determinant() - _alpha;
-  MATRIX2 _PK1 = _mu * F + _lambda * Jminus1 * pJpF;
-  return _PK1;
 }
 

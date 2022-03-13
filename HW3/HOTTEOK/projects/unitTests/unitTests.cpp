@@ -143,6 +143,130 @@ bool convergenceTestNH(const SNH* material, const VECTOR6 &x)
 }
 
 //////////////////////////////////////////////////////////////////////////////
+// do a convergence test on the collision Jacobian
+//////////////////////////////////////////////////////////////////////////////
+bool convergenceTestCJ(const SNH* material, const VECTOR6 &x)
+{
+  cout << "=============================================================== " << endl;
+  cout << " VERIFYING Collision Jacobian for " << material->name().c_str() << endl;
+  cout << "=============================================================== " << endl;
+
+  REAL psi0 = material->cpsi(x);
+  MATRIX P = material->cPK1(x); // shape (1, 6)
+
+  double eps = 1e-4;
+  int e = 0;
+  double minSeen = FLT_MAX;
+  while (eps > 1e-8)
+  {
+    MATRIX finiteDiffP = MATRIX(1, 6);
+    finiteDiffP.setZero();
+
+    // for each of the degrees of the freedom
+    for (int i = 0; i < 6; i++)
+    {
+      VECTOR6 xnew = x;
+      xnew(i) += eps;
+      REAL psi = material->cpsi(xnew);
+
+      // store the finite difference
+      finiteDiffP(0, i) = (psi - psi0) / eps;
+    }
+
+    MATRIX diff = P - finiteDiffP;
+    REAL diffNorm = (fabs(diff.norm() / P.norm())) / 6.0;
+    if (diffNorm < minSeen)
+      minSeen = diffNorm;
+    cout << "eps: " << eps << " diff: " << diffNorm << endl;
+
+    if (e == 4 && minSeen > 1e-6)
+    {
+      cout << " TEST FAILED!!!!!" << endl;
+      cout << " P: " << endl << P << endl;
+      cout << " finite diff: " << endl << finiteDiffP << endl;
+      cout << " diff: " << endl << diff << endl;
+      return false;
+    }
+    else
+      eps *= 0.1;
+    e++;
+  }
+  if (minSeen < 1e-6)
+    cout << " TEST PASSED. " << endl;
+  else
+  {
+    cout << " TEST FAILED. " << endl;
+    return false;
+  }
+  return true;
+}
+
+
+//////////////////////////////////////////////////////////////////////////////
+// do a convergence test on the collision Hessian
+//////////////////////////////////////////////////////////////////////////////
+bool convergenceTestCH(const SNH* material, const VECTOR6 &x)
+{
+  cout << "=============================================================== " << endl;
+  cout << " VERIFYING Collision Hessian for " << material->name().c_str() << endl;
+  cout << "=============================================================== " << endl;
+
+  MATRIX H = material->cHessian(x);
+  MATRIX J0 = material->cPK1(x);
+
+  double eps = 1e-4;
+  int e = 0;
+  double minSeen = FLT_MAX;
+  while (eps > 1e-8)
+  {
+    MATRIX finiteDiff = MATRIX(6, 6);
+    finiteDiff.setZero();
+
+    // for each of the degrees of the freedom
+    for (int i = 0; i < 6; i++)
+    {
+      VECTOR6 xnew = x;
+      xnew[i] += eps;
+
+      // get the new psi
+      MATRIX J = material->cPK1(xnew);
+
+      // store the finite difference
+      MATRIX diff = (J - J0) / eps;
+      for (int j = 0; j < 6; j++)
+        finiteDiff(j,i) = diff(0,j);
+    }
+
+    MATRIX diff = H - finiteDiff;
+    REAL diffNorm = (fabs(diff.norm() / finiteDiff.norm())) / 36.0;
+    if (diffNorm < minSeen)
+      minSeen = diffNorm;
+    cout << "eps: " << eps << " diff: " << diffNorm << endl;
+
+    if (e == 4 && minSeen > 1e-6)
+    {
+      cout << " TEST FAILED!!!!!" << endl;
+      cout << " H: " << endl << H << endl;
+      cout << " finite diff: " << endl << finiteDiff << endl;
+      cout << " diff: " << endl << diff << endl;
+      return false;
+    }
+    eps *= 0.1;
+    e++;
+  }
+  if (minSeen < 1e-6)
+  {
+    cout << " TEST PASSED. " << endl;
+  }
+  else
+  {
+    cout << " TEST FAILED. " << endl;
+    return false;
+  }
+  return true;
+}
+
+//////////////////////////////////////////////////////////////////////////////
 // do a convergence test on the PK1
 //////////////////////////////////////////////////////////////////////////////
 bool convergenceTestPK1(const MATERIAL* material, const MATRIX2 &F)
@@ -407,18 +531,10 @@ int main(int argc, char** argv)
   VECTOR6 x = randomVector(6, 1.0);
   //STVK stvk(1.0, 1.0);
   SNH material(1.0, 1.0);
-  //MATRIX F2 = F;
-  //MATRIX F3 = MATRIX(4,4);
-  //F3.setZero();
-  //material.assign(F3, 1, 3, 1, 3, F2);
-  //MATRIX F4 = MATRIX(4, 4);
-  //F4.setZero();
-  //material.assign(F4, 0, 1, 0, 4, F3, 1, 0);
-  //cout << F3 << endl;
-  //cout << F4 << endl;
-  cout << x << endl;
   convergenceTestNJ(&material, x);
   convergenceTestNH(&material, x);
+  convergenceTestCJ(&material, x);
+  convergenceTestCH(&material, x);
   convergenceTestPK1(&material, F);
   convergenceTestHessian(&material, F);
 

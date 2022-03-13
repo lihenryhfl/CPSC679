@@ -7,7 +7,7 @@ class SNH : public MATERIAL
 {
 public:
   // settings from the 2008 cubature paper
-  SNH(const REAL mu = 5000, const REAL lambda = 1000);
+  SNH(const REAL mu = 5000, const REAL lambda = 1000, const REAL eps = 0.02);
   ~SNH() {};
 
   // P = first Piola-Kirchoff stress tensor
@@ -30,6 +30,12 @@ public:
   MATRIX reshape(const MATRIX& A, int n0 = 1, int n1 = 1) const;
   void assign(MATRIX& A, int xstart, int xend, int ystart, int yend, MATRIX& B, int bxstart=0, int bystart=0) const;
 
+  // collision energies
+  MATRIX dtdx(const VECTOR6& x) const;
+  REAL cpsi(const VECTOR6& x) const;
+  MATRIX cPK1(const VECTOR6& x) const;
+  MATRIX cHessian(const VECTOR6& x) const;
+
   // normals
   MATRIX2 makeR() const;
   MATRIX normalHessian(const VECTOR6& x) const;
@@ -37,6 +43,7 @@ public:
   VECTOR2 normal(const VECTOR6& x) const;
 
 protected:
+  REAL _eps;
   REAL _mu;
   REAL _lambda;
   REAL _alpha;

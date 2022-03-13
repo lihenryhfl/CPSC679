@@ -27,11 +27,21 @@ public:
   // get the strain energy
   virtual REAL psi(const MATRIX2& F) const override;
 
+  MATRIX reshape(const MATRIX& A, int n0 = 1, int n1 = 1) const;
+  void assign(MATRIX& A, int xstart, int xend, int ystart, int yend, MATRIX& B, int bxstart=0, int bystart=0) const;
+
+  // normals
+  MATRIX2 makeR() const;
+  MATRIX normalHessian(const VECTOR6& x) const;
+  MATRIX normalJacobian(const VECTOR6& x) const;
+  VECTOR2 normal(const VECTOR6& x) const;
+
 protected:
   REAL _mu;
   REAL _lambda;
   REAL _alpha;
   MATRIX4 _hessJ;
+  MATRIX2 _R;
 };
 
 #endif

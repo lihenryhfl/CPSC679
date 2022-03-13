@@ -19,6 +19,130 @@ std::uniform_real_distribution<REAL> dist(0.0, 1.0);
 using namespace std;
 
 //////////////////////////////////////////////////////////////////////////////
+// do a convergence test on the normalJacobian
+//////////////////////////////////////////////////////////////////////////////
+bool convergenceTestNJ(const SNH* material, const VECTOR6 &x)
+{
+  cout << "=============================================================== " << endl;
+  cout << " VERIFYING dndx for " << material->name().c_str() << endl;
+  cout << "=============================================================== " << endl;
+
+  VECTOR2 n0 = material->normal(x);
+  MATRIX dndx = material->normalJacobian(x);
+
+  double eps = 1e-4;
+  int e = 0;
+  double minSeen = FLT_MAX;
+  while (eps > 1e-8)
+  {
+    MATRIX finiteDiffDndx = MATRIX(2, 6);
+
+    // for each of the degrees of the freedom
+    for (int i = 0; i < 6; i++)
+    {
+      VECTOR6 xnew = x;
+      xnew[i] += eps;
+      VECTOR2 n = material->normal(xnew);
+
+      // store the finite difference
+      VECTOR2 dn = (n - n0) / eps;
+      finiteDiffDndx(0, i) = dn[0];
+      finiteDiffDndx(1, i) = dn[1];
+    }
+
+    MATRIX diff = dndx - finiteDiffDndx;
+    REAL diffNorm = (fabs(diff.norm() / dndx.norm())) / 12.0;
+    if (diffNorm < minSeen)
+      minSeen = diffNorm;
+    cout << "eps: " << eps << " diff: " << diffNorm << endl;
+
+    if (e == 4 && minSeen > 1e-6)
+    {
+      cout << " TEST FAILED!!!!!" << endl;
+      cout << " dndx: " << endl << dndx << endl;
+      cout << " finite diff: " << endl << finiteDiffDndx << endl;
+      cout << " diff: " << endl << diff << endl;
+      return false;
+    }
+    else
+      eps *= 0.1;
+    e++;
+  }
+  if (minSeen < 1e-6)
+    cout << " TEST PASSED. " << endl;
+  else
+  {
+    cout << " TEST FAILED. " << endl;
+    return false;
+  }
+  return true;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+// do a convergence test on the normalHessian
+//////////////////////////////////////////////////////////////////////////////
+bool convergenceTestNH(const SNH* material, const VECTOR6 &x)
+{
+  cout << "=============================================================== " << endl;
+  cout << " VERIFYING NH for " << material->name().c_str() << endl;
+  cout << "=============================================================== " << endl;
+
+  MATRIX J0 = material->normalJacobian(x);
+  MATRIX H = material->normalHessian(x);
+
+  J0 = material->reshape(J0, 12, 1);
+
+  double eps = 1e-4;
+  int e = 0;
+  double minSeen = FLT_MAX;
+  while (eps > 1e-8)
+  {
+    MATRIX finiteDiffH = MATRIX(12, 6);
+    finiteDiffH.setZero();
+
+    // for each of the degrees of the freedom
+    for (int i = 0; i < 6; i++)
+    {
+      VECTOR6 xnew = x;
+      xnew[i] += eps;
+      MATRIX J = material->normalJacobian(xnew);
+      J = material->reshape(J, 12, 1);
+
+      // store the finite difference
+      MATRIX dJ = (J - J0) / eps;
+      for (int j = 0; j < 12; j++)
+        finiteDiffH(j, i) = dJ(j, 0);
+    }
+
+    MATRIX diff = H - finiteDiffH;
+    REAL diffNorm = (fabs(diff.norm() / H.norm())) / 72.0;
+    if (diffNorm < minSeen)
+      minSeen = diffNorm;
+    cout << "eps: " << eps << " diff: " << diffNorm << endl;
+
+    if (e == 4 && minSeen > 1e-6)
+    {
+      cout << " TEST FAILED!!!!!" << endl;
+      cout << " H: " << endl << H << endl;
+      cout << " finite diff: " << endl << finiteDiffH << endl;
+      cout << " diff: " << endl << diff << endl;
+      return false;
+    }
+    else
+      eps *= 0.1;
+    e++;
+  }
+  if (minSeen < 1e-6)
+    cout << " TEST PASSED. " << endl;
+  else
+  {
+    cout << " TEST FAILED. " << endl;
+    return false;
+  }
+  return true;
+}
+
+//////////////////////////////////////////////////////////////////////////////
 // do a convergence test on the PK1
 //////////////////////////////////////////////////////////////////////////////
 bool convergenceTestPK1(const MATERIAL* material, const MATRIX2 &F)
@@ -78,7 +202,7 @@ bool convergenceTestPK1(const MATERIAL* material, const MATRIX2 &F)
 }
 
 ///////////////////////////////////////////////////////////////////////
-// convert a MATRIX3 to a VECTOR9 in a consistent way
+// convert a MATRIX2 to a VECTOR4 in a consistent way
 ///////////////////////////////////////////////////////////////////////
 VECTOR4 flatten(const MATRIX2& A)
 {
@@ -280,10 +404,23 @@ MATRIX2 randomMatrix2(const REAL scaling)
 int main(int argc, char** argv)
 {
   MATRIX2 F = randomMatrix2(10.0);
+  VECTOR6 x = randomVector(6, 1.0);
   //STVK stvk(1.0, 1.0);
-  SNH stvk(1.0, 1.0);
-  convergenceTestPK1(&stvk, F);
-  convergenceTestHessian(&stvk, F);
+  SNH material(1.0, 1.0);
+  //MATRIX F2 = F;
+  //MATRIX F3 = MATRIX(4,4);
+  //F3.setZero();
+  //material.assign(F3, 1, 3, 1, 3, F2);
+  //MATRIX F4 = MATRIX(4, 4);
+  //F4.setZero();
+  //material.assign(F4, 0, 1, 0, 4, F3, 1, 0);
+  //cout << F3 << endl;
+  //cout << F4 << endl;
+  cout << x << endl;
+  convergenceTestNJ(&material, x);
+  convergenceTestNH(&material, x);
+  convergenceTestPK1(&material, F);
+  convergenceTestHessian(&material, F);
 
   // build a square mesh
   vector<VECTOR2> nodes;
@@ -297,6 +434,6 @@ int main(int argc, char** argv)
   triangles[0] = VECTOR3I(0,1,2);
   triangles[1] = VECTOR3I(1,3,2);
   TRIANGLE_MESH triangleMesh(nodes, triangles);
-  convergenceTestK(&stvk, triangleMesh);
+  convergenceTestK(&material, triangleMesh);
   return 1;
 }

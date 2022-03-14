@@ -7,17 +7,7 @@ SNH::SNH(const REAL mu, const REAL lambda, const REAL eps) :
 {
   _name = std::string("SNH");
   _hessJ = makeHessJ();
-  _R = makeR();
-}
-
-MATRIX2 SNH::makeR() const
-{
-  // computes a 2x2 rotation matrix for 90 deg rotation
-  MATRIX2 R;
-  R.setZero();
-  R(0, 1) = -1.0;
-  R(1, 0) = 1.0;
-  return R;
+  _R << 0., -1., 1., 0.;
 }
 
 MATRIX4 SNH::makeHessJ() const

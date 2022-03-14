@@ -36,11 +36,69 @@ TRIANGLE_MESH::TRIANGLE_MESH(const std::vector<VECTOR2>& restVertices,
   // compute triangle and one-ring areas
   computeAreas();
 
+  _R << 0., -1., 1., 0.;
+
+  // compute boundary edges
+  computeBoundaryEdges();
+
   _staleFs = true;
 }
 
 TRIANGLE_MESH::~TRIANGLE_MESH()
 {
+}
+
+///////////////////////////////////////////////////////////////////////
+// find the boundary edges, and build requisite data structures
+// for collision detection + resolution
+///////////////////////////////////////////////////////////////////////
+bool TRIANGLE_MESH::isVertexInTriangle(int idx, const VECTOR3I& triangle, REAL eps)
+{
+  // is vertex x_i inside the given triangle?
+  // idea: compute three hyperplanes corresponding to the three sides
+  // of the triangle. then test the sign of the new point
+
+  // get points
+  VECTOR2 xquery, x0, x1, x2;
+  xquery = _vertices[idx];
+  x0 = _vertices[triangle[0]];
+  x1 = _vertices[triangle[1]];
+  x2 = _vertices[triangle[2]];
+
+  // build hyperplanes
+  std::vector<VECTOR2> tVerts {x0, x2, x1};
+  for (int i = 0; i < 3; i++) {
+    VECTOR2 x_start = tVerts[i], x_end = tVerts[(i + 1) % 3];
+    VECTOR2 diff = x_end - x_start;
+    VECTOR2 hpNormal = _R * diff / diff.norm();
+    REAL hpBias = -hpNormal.transpose() * x_start;
+    REAL dist = xquery.transpose() * hpNormal + hpBias;
+
+    // for debugging
+    REAL selfDist = tVerts[(i + 2) % 3].transpose() * hpNormal + hpBias;
+    //cout << "on vertex " << i << (i + 1) % 3 << ", vertex "
+      //<< (i + 2) % 3 << " distance (should be negative): " << selfDist << endl;
+    assert(selfDist < 0);
+
+    if (dist > eps)
+      return false;
+  }
+  return true;
+}
+
+void TRIANGLE_MESH::computeBoundaryEdges()
+{
+  // for each triangle, check each edge against every other triangle
+  // to see if the edge is touching another triangle
+  //
+  // this check is performed by looking slightly left or right from
+  // the midpoint of the line segment stretching from the two vertices
+  // of the edge
+
+  for (unsigned int x = 0; x < _triangles.size(); x++) {
+    const VECTOR3I t = _triangles[x];
+    isVertexInTriangle(0, t);
+  }
 }
 
 ///////////////////////////////////////////////////////////////////////

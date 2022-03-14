@@ -37,7 +37,6 @@ public:
   MATRIX cHessian(const VECTOR6& x) const;
 
   // normals
-  MATRIX2 makeR() const;
   MATRIX normalHessian(const VECTOR6& x) const;
   MATRIX normalJacobian(const VECTOR6& x) const;
   VECTOR2 normal(const VECTOR6& x) const;

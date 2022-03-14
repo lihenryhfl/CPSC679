@@ -57,6 +57,15 @@ private:
   std::vector<MATRIX2>   _Fs;
   std::vector<MATRIX4x6> _pFpxs;
 
+  // collision detection / resolution functions
+  std::vector<VECTOR2I> _boundaryEdges;
+  std::vector<VECTOR2I> _boundaryEdgeToVertex;
+  bool isVertexInTriangle(int idx, const VECTOR3I& triangle, REAL eps = 0.02);
+  void computeBoundaryEdges();
+
+  // for convenience, the 270 deg rotation matrix
+  MATRIX2 _R;
+
   // did you recompute F after setting the displacements or positions?
   bool _staleFs;
 };

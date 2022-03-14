@@ -60,8 +60,8 @@ private:
   // collision detection / resolution functions
   std::vector<int> _boundaryVertices;
   std::vector<VECTOR2I> _boundaryEdges;
-  bool isVertexInTriangle(const VECTOR2& xquery, const VECTOR3I& triangle, REAL eps = 0.02);
-  void computeBoundaryEdgesAndVertices(REAL probeEps = 0.0001);
+  bool isVertexInTriangle(const VECTOR2& xquery, const VECTOR3I& triangle, REAL eps = 2e-2);
+  void computeBoundaryEdgesAndVertices(REAL probeEps = 1e-3);
 
   // for convenience, the 270 deg rotation matrix
   MATRIX2 _R;

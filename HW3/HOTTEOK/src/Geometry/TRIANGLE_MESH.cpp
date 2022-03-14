@@ -81,7 +81,6 @@ bool TRIANGLE_MESH::isVertexInTriangle(const VECTOR2& xquery, const VECTOR3I& tr
 
     // sanity check: the third vertex is always on the
     // "negative" side of the hyperplane, right?
-    REAL selfDist = (tVerts[(i + 2) % 3].transpose() * normal + bias);
     assert((tVerts[(i + 2) % 3].transpose() * normal + bias) < 0);
 
     if (dist > eps)
@@ -111,7 +110,7 @@ void TRIANGLE_MESH::computeBoundaryEdgesAndVertices(REAL probeEps)
       VECTOR2 normal = _R * diff / diff.norm();
       VECTOR2 x_probe = x_start + (diff * 0.5) + (normal * probeEps);
       assert(!isVertexInTriangle(x_probe, t, 0));
-      assert(isVertexInTriangle(x_probe, t, probeEps));
+      assert(isVertexInTriangle(x_probe, t, probeEps * 1.1));
       bool exterior = true;
       for (unsigned int k = 0; k < _triangles.size(); k++) {
         const VECTOR3I t_ = _triangles[k];

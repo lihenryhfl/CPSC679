@@ -7,7 +7,7 @@ SNH::SNH(const REAL mu, const REAL lambda, const REAL eps) :
 {
   _name = std::string("SNH");
   _hessJ = makeHessJ();
-  _R << 0., -1., 1., 0.;
+  _R << 0., 1., -1., 0.;
 }
 
 MATRIX4 SNH::makeHessJ() const

@@ -36,10 +36,16 @@ TRIANGLE_MESH::TRIANGLE_MESH(const std::vector<VECTOR2>& restVertices,
   // compute triangle and one-ring areas
   computeAreas();
 
-  _R << 0., -1., 1., 0.;
+  _R << 0., 1., -1., 0.;
 
   // compute boundary edges
-  computeBoundaryEdges();
+  computeBoundaryEdgesAndVertices();
+
+  for (unsigned int k = 0; k < _boundaryVertices.size(); k++)
+    cout << "k = " << k << ", _boundaryVertex: " << _boundaryVertices[k] << endl;
+
+  for (unsigned int k = 0; k < _boundaryEdges.size(); k++)
+    cout << "k = " << k << ", _boundaryEdges: " << _boundaryEdges[k] << endl;
 
   _staleFs = true;
 }
@@ -52,15 +58,14 @@ TRIANGLE_MESH::~TRIANGLE_MESH()
 // find the boundary edges, and build requisite data structures
 // for collision detection + resolution
 ///////////////////////////////////////////////////////////////////////
-bool TRIANGLE_MESH::isVertexInTriangle(int idx, const VECTOR3I& triangle, REAL eps)
+bool TRIANGLE_MESH::isVertexInTriangle(const VECTOR2& xquery, const VECTOR3I& triangle, REAL eps)
 {
   // is vertex x_i inside the given triangle?
   // idea: compute three hyperplanes corresponding to the three sides
   // of the triangle. then test the sign of the new point
 
   // get points
-  VECTOR2 xquery, x0, x1, x2;
-  xquery = _vertices[idx];
+  VECTOR2 x0, x1, x2;
   x0 = _vertices[triangle[0]];
   x1 = _vertices[triangle[1]];
   x2 = _vertices[triangle[2]];
@@ -70,15 +75,14 @@ bool TRIANGLE_MESH::isVertexInTriangle(int idx, const VECTOR3I& triangle, REAL e
   for (int i = 0; i < 3; i++) {
     VECTOR2 x_start = tVerts[i], x_end = tVerts[(i + 1) % 3];
     VECTOR2 diff = x_end - x_start;
-    VECTOR2 hpNormal = _R * diff / diff.norm();
-    REAL hpBias = -hpNormal.transpose() * x_start;
-    REAL dist = xquery.transpose() * hpNormal + hpBias;
+    VECTOR2 normal = _R * diff / diff.norm();
+    REAL bias = -normal.transpose() * x_start;
+    REAL dist = xquery.transpose() * normal + bias;
 
-    // for debugging
-    REAL selfDist = tVerts[(i + 2) % 3].transpose() * hpNormal + hpBias;
-    //cout << "on vertex " << i << (i + 1) % 3 << ", vertex "
-      //<< (i + 2) % 3 << " distance (should be negative): " << selfDist << endl;
-    assert(selfDist < 0);
+    // sanity check: the third vertex is always on the
+    // "negative" side of the hyperplane, right?
+    REAL selfDist = (tVerts[(i + 2) % 3].transpose() * normal + bias);
+    assert((tVerts[(i + 2) % 3].transpose() * normal + bias) < 0);
 
     if (dist > eps)
       return false;
@@ -86,18 +90,57 @@ bool TRIANGLE_MESH::isVertexInTriangle(int idx, const VECTOR3I& triangle, REAL e
   return true;
 }
 
-void TRIANGLE_MESH::computeBoundaryEdges()
+void TRIANGLE_MESH::computeBoundaryEdgesAndVertices(REAL probeEps)
 {
   // for each triangle, check each edge against every other triangle
   // to see if the edge is touching another triangle
   //
-  // this check is performed by looking slightly left or right from
+  // this check is performed by looking slightly right from
   // the midpoint of the line segment stretching from the two vertices
   // of the edge
+  for (unsigned int i = 0; i < _triangles.size(); i++) {
+    const VECTOR3I t = _triangles[i];
+    VECTOR2 x0, x1, x2;
+    x0 = _vertices[t[0]];
+    x1 = _vertices[t[1]];
+    x2 = _vertices[t[2]];
+    std::vector<VECTOR2> tVerts {x0, x1, x2};
+    for (int j = 0; j < 3; j++) {
+      VECTOR2 x_start = tVerts[j], x_end = tVerts[(j + 1) % 3];
+      VECTOR2 diff = x_end - x_start;
+      VECTOR2 normal = _R * diff / diff.norm();
+      VECTOR2 x_probe = x_start + (diff * 0.5) + (normal * probeEps);
+      assert(!isVertexInTriangle(x_probe, t, 0));
+      assert(isVertexInTriangle(x_probe, t, probeEps));
+      bool exterior = true;
+      for (unsigned int k = 0; k < _triangles.size(); k++) {
+        const VECTOR3I t_ = _triangles[k];
+        if (isVertexInTriangle(x_probe, t_, 0)) {
+          exterior = false;
+          break;
+        }
+      }
+      if (exterior) {
+        int idx1 = t[j], idx2 = (t[(j + 1) % 3]);
 
-  for (unsigned int x = 0; x < _triangles.size(); x++) {
-    const VECTOR3I t = _triangles[x];
-    isVertexInTriangle(0, t);
+        // add to _boundaryEdges
+        VECTOR2I edge(idx1, idx2);
+        _boundaryEdges.push_back(edge);
+
+        // add to _boundaryVertices IF it doesn't already exist
+        bool alreadyAdded1 = false, alreadyAdded2 = false;
+        for (unsigned int k = 0; k < _boundaryVertices.size(); k++) {
+          if (_boundaryVertices[k] == idx1)
+            alreadyAdded1 = true;
+          if (_boundaryVertices[k] == idx2)
+            alreadyAdded2 = true;
+        }
+        if (!alreadyAdded1)
+          _boundaryVertices.push_back(idx1);
+        if (!alreadyAdded2)
+          _boundaryVertices.push_back(idx2);
+      }
+    }
   }
 }
 

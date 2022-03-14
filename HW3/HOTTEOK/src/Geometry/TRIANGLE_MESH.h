@@ -23,12 +23,15 @@ public:
 
   // get the hyperelastic gradient, negative scaled by area
   VECTOR computeMaterialForces(const MATERIAL* material) const;
+  VECTOR computeCollisionForces(const MATERIAL* material) const;
 
   // get the hyperelastic hessian, negative scaled by area
   MATRIX computeStiffnessMatrix(const MATERIAL* material, bool unitTest=false) const;
+  MATRIX computeCollisionHessian(const MATERIAL* material, bool unitTest=false) const;
 
   // compute deformation gradients
   void computeFs();
+  MATRIX clampEigenvalues(const MATRIX& A) const;
 
   // displacement-based manipulations
   VECTOR getDisplacement() const;
@@ -60,6 +63,8 @@ private:
   // collision detection / resolution functions
   std::vector<int> _boundaryVertices;
   std::vector<VECTOR2I> _boundaryEdges;
+  std::vector<REAL> _boundaryVertexAreas;
+  std::vector<REAL> _boundaryEdgeAreas;
   bool isVertexInTriangle(const VECTOR2& xquery, const VECTOR3I& triangle, REAL eps = 2e-2);
   void computeBoundaryEdgesAndVertices(REAL probeEps = 1e-3);
 

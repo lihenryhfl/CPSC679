@@ -11,7 +11,6 @@ std::uniform_real_distribution<REAL> dist(0.0, 1.0);
 
 #include "Geometry/TRIANGLE_MESH.h"
 #include "Geometry/SQUARE.h"
-#include "Hyperelastic/STVK.h"
 #include "Hyperelastic/SNH.h"
 #include "Timestepper/TIMESTEPPER.h"
 #include "Timestepper/FORWARD_EULER.h"

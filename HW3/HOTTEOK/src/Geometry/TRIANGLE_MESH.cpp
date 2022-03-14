@@ -41,11 +41,11 @@ TRIANGLE_MESH::TRIANGLE_MESH(const std::vector<VECTOR2>& restVertices,
   // compute boundary edges
   computeBoundaryEdgesAndVertices();
 
-  for (unsigned int k = 0; k < _boundaryVertices.size(); k++)
-    cout << "k = " << k << ", _boundaryVertex: " << _boundaryVertices[k] << endl;
+  //for (unsigned int k = 0; k < _boundaryVertices.size(); k++)
+    //cout << "k = " << k << ", _boundaryVertex: " << _boundaryVertices[k] << endl;
 
-  for (unsigned int k = 0; k < _boundaryEdges.size(); k++)
-    cout << "k = " << k << ", _boundaryEdges: " << _boundaryEdges[k] << endl;
+  //for (unsigned int k = 0; k < _boundaryEdges.size(); k++)
+    //cout << "k = " << k << ", _boundaryEdges: " << _boundaryEdges[k] << endl;
 
   _staleFs = true;
 }
@@ -120,11 +120,13 @@ void TRIANGLE_MESH::computeBoundaryEdgesAndVertices(REAL probeEps)
         }
       }
       if (exterior) {
-        int idx1 = t[j], idx2 = (t[(j + 1) % 3]);
+        int idx1 = t[j], idx2 = t[(j + 1) % 3], idx3 = t[(j + 2) % 3];
 
         // add to _boundaryEdges
         VECTOR2I edge(idx1, idx2);
+        REAL edgeArea = (_vertices[idx2] - _vertices[idx1]).norm();
         _boundaryEdges.push_back(edge);
+        _boundaryEdgeAreas.push_back(edgeArea);
 
         // add to _boundaryVertices IF it doesn't already exist
         bool alreadyAdded1 = false, alreadyAdded2 = false;
@@ -134,10 +136,18 @@ void TRIANGLE_MESH::computeBoundaryEdgesAndVertices(REAL probeEps)
           if (_boundaryVertices[k] == idx2)
             alreadyAdded2 = true;
         }
-        if (!alreadyAdded1)
+        if (!alreadyAdded1) {
+          REAL vertexArea1 = 0.5 * ((_vertices[idx2] - _vertices[idx1]).norm()
+            + (_vertices[idx3] - _vertices[idx1]).norm());
           _boundaryVertices.push_back(idx1);
-        if (!alreadyAdded2)
+          _boundaryVertexAreas.push_back(vertexArea1);
+        }
+        if (!alreadyAdded2) {
+          REAL vertexArea2 = 0.5 * ((_vertices[idx1] - _vertices[idx2]).norm()
+            + (_vertices[idx3] - _vertices[idx2]).norm());
           _boundaryVertices.push_back(idx2);
+          _boundaryVertexAreas.push_back(vertexArea2);
+        }
       }
     }
   }
@@ -273,6 +283,22 @@ MATRIX2 TRIANGLE_MESH::pFpx(const int index, const MATRIX2& DmInv)
 }
 
 ///////////////////////////////////////////////////////////////////////
+// clamp the eigenvalues of a 6x6 to semi-positive-definite
+///////////////////////////////////////////////////////////////////////
+MATRIX TRIANGLE_MESH::clampEigenvalues(const MATRIX& A) const
+{
+  // clamp directly
+  Eigen::SelfAdjointEigenSolver<MATRIX> eigensolver(A);
+  const MATRIX Q = eigensolver.eigenvectors();
+  VECTOR values = eigensolver.eigenvalues();
+  for (int x = 0; x < values.rows(); x++)
+    values[x] = (values[x] > 0.0) ? values[x] : 0.0;
+  MATRIX B = Q * values.asDiagonal() * Q.transpose();
+
+  return B;
+}
+
+///////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////
 VECTOR TRIANGLE_MESH::computeMaterialForces(const MATERIAL* material) const
 {
@@ -318,23 +344,114 @@ VECTOR TRIANGLE_MESH::computeMaterialForces(const MATERIAL* material) const
 ///////////////////////////////////////////////////////////////////////
 // clamp the eigenvalues of a 9x9 to semi-positive-definite
 ///////////////////////////////////////////////////////////////////////
-MATRIX4 clampEigenvalues(const MATRIX4& A)
-{
-  // clamp directly
-  Eigen::SelfAdjointEigenSolver<MATRIX4> eigensolver(A);
-  const MATRIX4 Q = eigensolver.eigenvectors();
-  VECTOR4 values = eigensolver.eigenvalues();
-  for (int x = 0; x < 4; x++)
-    values[x] = (values[x] > 0.0) ? values[x] : 0.0;
-  MATRIX4 B = Q * values.asDiagonal() * Q.transpose();
+//MATRIX4 clampEigenvalues(const MATRIX4& A)
+//{
+  //// clamp directly
+  //Eigen::SelfAdjointEigenSolver<MATRIX4> eigensolver(A);
+  //const MATRIX4 Q = eigensolver.eigenvectors();
+  //VECTOR4 values = eigensolver.eigenvalues();
+  //for (int x = 0; x < 4; x++)
+    //values[x] = (values[x] > 0.0) ? values[x] : 0.0;
+  //MATRIX4 B = Q * values.asDiagonal() * Q.transpose();
 
-  return B;
-}
+  //return B;
+//}
 
 ///////////////////////////////////////////////////////////////////////
 // compute the stiffness matrix
 ///////////////////////////////////////////////////////////////////////
 MATRIX TRIANGLE_MESH::computeStiffnessMatrix(const MATERIAL* material, bool unitTest) const
+{
+  // you recomputed F, right?
+  assert(!_staleFs);
+
+  vector<MATRIX6> perElementHessians(_triangles.size());
+  for (unsigned int i = 0; i < _triangles.size(); i++)
+  {
+    const MATRIX2& F      = _Fs[i];
+    const MATRIX4x6& pFpx = _pFpxs[i];
+    if (unitTest) {
+      const MATRIX4 hessian = material->hessian(F);
+      perElementHessians[i] = -_restAreas[i] * (pFpx.transpose() * hessian) * pFpx;
+    } else {
+      const MATRIX4 projectedHessian = clampEigenvalues(material->hessian(F));
+      perElementHessians[i] = -_restAreas[i] * (pFpx.transpose() * projectedHessian) * pFpx;
+    }
+  }
+
+  const int DOFs = _vertices.size() * 2;
+  MATRIX K(DOFs, DOFs);
+  K.setZero();
+  for (unsigned int i = 0; i < _triangles.size(); i++)
+  {
+    const VECTOR3I& t = _triangles[i];
+    const MATRIX6& H = perElementHessians[i];
+    for (int y = 0; y < 3; y++)
+    {
+      int yVertex = t[y];
+      for (int x = 0; x < 3; x++)
+      {
+        int xVertex = t[x];
+        for (int b = 0; b < 2; b++)
+          for (int a = 0; a < 2; a++)
+          {
+            assert(2 * x + a < 6);
+            assert(2 * y + b < 6);
+            assert(2 * xVertex + a < DOFs);
+            assert(2 * yVertex + b < DOFs);
+            const REAL entry = H(2 * x + a, 2 * y + b);
+            K(2 * xVertex + a, 2 * yVertex + b) += entry;
+          }
+      }
+    }
+  }
+
+  return K;
+}
+
+///////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////
+VECTOR TRIANGLE_MESH::computeCollisionForces(const MATERIAL* material) const
+{
+  // you recomputed F, right?
+  assert(!_staleFs);
+
+  REAL eps = material->getEps();
+  const int DOFs = _vertices.size() * 2;
+  VECTOR forces(DOFs);
+  forces.setZero();
+  for (unsigned int i = 0; i < _boundaryVertices.size(); i++) {
+    for (unsigned int j = 0; j < _boundaryEdges.size(); j++) {
+      VECTOR2 x0 = _vertices[_boundaryVertices[i]];
+      VECTOR2 x1 = _vertices[_boundaryEdges[i][0]];
+      VECTOR2 x2 = _vertices[_boundaryEdges[i][1]];
+      VECTOR2 normal = _R * (x2 - x1) / (x2 - x1).norm();
+      // check for collision. if so, compute forces
+      if (normal.transpose() * (x0 - x1) < eps) {
+        VECTOR6 x;
+        x << x0, x1, x2;
+        REAL area = _boundaryVertexAreas[i] + _boundaryEdgeAreas[i];
+        const VECTOR6 forceDensity = material->cPK1(x);
+        const VECTOR6 force = -area * forceDensity;
+
+        // fill in corresponding values
+        forces[2 * _boundaryVertices[i]] += force[0];
+        forces[2 * _boundaryVertices[i] + 1] += force[1];
+        forces[2 * _boundaryEdges[i][0]] += force[2];
+        forces[2 * _boundaryEdges[i][0] + 1] += force[3];
+        forces[2 * _boundaryEdges[i][1]] += force[4];
+        forces[2 * _boundaryEdges[i][1] + 1] += force[5];
+      }
+    }
+  }
+
+  return forces;
+}
+
+///////////////////////////////////////////////////////////////////////
+// compute the stiffness matrix
+///////////////////////////////////////////////////////////////////////
+MATRIX TRIANGLE_MESH::computeCollisionHessian(const MATERIAL* material, bool unitTest) const
 {
   // you recomputed F, right?
   assert(!_staleFs);

@@ -28,18 +28,20 @@ public:
   virtual REAL psi(const MATRIX2& F) const override;
 
   MATRIX reshape(const MATRIX& A, int n0 = 1, int n1 = 1) const;
-  void assign(MATRIX& A, int xstart, int xend, int ystart, int yend, MATRIX& B, int bxstart=0, int bystart=0) const;
 
   // collision energies
   MATRIX dtdx(const VECTOR6& x) const;
-  REAL cpsi(const VECTOR6& x) const;
-  MATRIX cPK1(const VECTOR6& x) const;
-  MATRIX cHessian(const VECTOR6& x) const;
+  REAL cpsi(const VECTOR6& x) const override;
+  MATRIX cPK1(const VECTOR6& x) const override;
+  MATRIX cHessian(const VECTOR6& x) const override;
 
   // normals
   MATRIX normalHessian(const VECTOR6& x) const;
   MATRIX normalJacobian(const VECTOR6& x) const;
   VECTOR2 normal(const VECTOR6& x) const;
+
+  // unprotected object variables
+  REAL getEps() const override;
 
 protected:
   REAL _eps;

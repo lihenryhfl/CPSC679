@@ -10,6 +10,11 @@ SNH::SNH(const REAL mu, const REAL lambda, const REAL eps) :
   _R << 0., 1., -1., 0.;
 }
 
+REAL SNH::getEps() const
+{
+  return _eps;
+}
+
 MATRIX4 SNH::makeHessJ() const
 {
   // computes the cofactor matrix of F
@@ -74,27 +79,6 @@ MATRIX SNH::reshape(const MATRIX& A, int n0, int n1) const
   }
 
   return newA;
-}
-
-// copy the values of B into a slice of A, i.e.
-// A[xstart:xend, ystart:yend] = B
-void SNH::assign(MATRIX& A, int xstart, int xend, int ystart, int yend, MATRIX& B, int bxstart, int bystart) const
-{
-  int nr = xend - xstart, nc = yend - ystart;
-  int nrb = B.rows() - bxstart, ncb = B.cols() - bystart;
-
-  if ((nr > nrb) || (nc > ncb) || (nr > A.rows()) || (nc > A.cols())) {
-    cout << (nr > nrb) << (nc > ncb) << (nr > A.rows()) << (nc > A.cols()) << endl;
-    cout << "nr: " << nr << " nrb: " << nrb << endl;
-    cout << "nc: " << nc << " ncb: " << ncb << endl;
-    cout << "A.rows(): " << A.rows() << " A.cols(): " << A.cols() << endl;
-    throw std::invalid_argument("SNH::assign: A slice does not map B shape!");
-  }
-
-  for (int j = ystart; j < yend; j++)
-    for (int i = xstart; i < xend; i++) {
-      A(i,j) = B(i-xstart+bxstart,j-ystart+bystart);
-    }
 }
 
 ///////////////////////////////////////////////////////////////////////
@@ -208,11 +192,11 @@ MATRIX SNH::normalHessian(const VECTOR6& x) const
   B << 2 * a[0], a[1], a[1], 0;
   B = _R * B;
   C = reshape(B, 4, 1);
-  assign(A1, 0, 4, 0, 1, C);
+  A1.block(0, 0, 4, 1) = C;
   B << 0, a[0], a[0], 2 * a[1];
   B = _R * B;
   C = reshape(B, 4, 1);
-  assign(A1, 0, 4, 1, 2, C);
+  A1.block(0, 1, 4, 1) = C;
   A1 = A1 * pow(norm, -3);
 
 
@@ -220,40 +204,36 @@ MATRIX SNH::normalHessian(const VECTOR6& x) const
   B = a * a.transpose();
   B = _R * B;
   C = reshape(B, 4, 1) * a[0];
-  assign(A2, 0, 4, 0, 1, C);
+  A2.block(0, 0, 4, 1) = C;
   C = reshape(B, 4, 1) * a[1];
-  assign(A2, 0, 4, 1, 2, C);
+  A2.block(0, 1, 4, 1) = C;
   A2 = A2 * -3 * pow(norm, -5);
 
   MATRIX A3 = MATRIX(4, 2);
   B = MATRIX2::Identity();
   B = _R * B;
   C = reshape(B, 4, 1) * a[0];
-  assign(A3, 0, 4, 0, 1, C);
+  A3.block(0, 0, 4, 1) = C;
   C = reshape(B, 4, 1) * a[1];
-  assign(A3, 0, 4, 1, 2, C);
+  A3.block(0, 1, 4, 1) = C;
   A3 = A3 * pow(norm, -3);
 
   MATRIX A = A1 + A2 + A3;
   A = reshape(A, 2, 4);
 
-  MATRIX A_1 = MATRIX(1, 4), A_2 = MATRIX(1, 4);
-  assign(A_1, 0, 1, 0, 4, A, 0, 0);
-  assign(A_2, 0, 1, 0, 4, A, 1, 0);
+  MATRIX A_1 = A.block(0, 0, 1, 4), A_2 = A.block(1, 0, 1, 4);
   A_1 = reshape(A_1, 2, 2);
   A_2 = reshape(A_2, 2, 2);
-  MATRIX nA_1 = -A_1;
-  MATRIX nA_2 = -A_2;
 
-  assign(H, 2, 4, 2, 4, nA_1);
-  assign(H, 8, 10, 2, 4, nA_2);
-  assign(H, 2, 4, 4, 6, A_1);
-  assign(H, 8, 10, 4, 6, A_2);
+  H.block(2, 2, 2, 2) = -A_1;
+  H.block(8, 2, 2, 2) = -A_2;
+  H.block(2, 4, 2, 2) = A_1;
+  H.block(8, 4, 2, 2) = A_2;
 
-  assign(H, 4, 6, 2, 4, A_1);
-  assign(H, 10, 12, 2, 4, A_2);
-  assign(H, 4, 6, 4, 6, nA_1);
-  assign(H, 10, 12, 4, 6, nA_2);
+  H.block(4, 2, 2, 2) = A_1;
+  H.block(10, 2, 2, 2) = A_2;
+  H.block(4, 4, 2, 2) = -A_1;
+  H.block(10, 4, 2, 2) = -A_2;
 
   return H;
 }

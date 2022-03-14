@@ -545,12 +545,6 @@ void readC()
   vector<VECTOR3I> triangles;
 
   loadTriangles2D("./data/C/C.1", nodes, triangles);
-  cout << "num nodes: " << nodes.size() << endl;
-  for (int i = 0; i < nodes.size(); i++) {
-    cout << i << endl;
-    cout << nodes[i] << endl;
-    cout << endl;
-  }
   triangleMesh = new TRIANGLE_MESH(nodes, triangles);
   const REAL mu     = MATERIAL::computeMu(youngsModulus, poissonsRatio);
   const REAL lambda = MATERIAL::computeLambda(youngsModulus, poissonsRatio);

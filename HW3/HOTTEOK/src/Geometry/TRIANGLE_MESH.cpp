@@ -66,7 +66,7 @@ bool TRIANGLE_MESH::isVertexInTriangle(int idx, const VECTOR3I& triangle, REAL e
   x2 = _vertices[triangle[2]];
 
   // build hyperplanes
-  std::vector<VECTOR2> tVerts {x0, x2, x1};
+  std::vector<VECTOR2> tVerts {x0, x1, x2};
   for (int i = 0; i < 3; i++) {
     VECTOR2 x_start = tVerts[i], x_end = tVerts[(i + 1) % 3];
     VECTOR2 diff = x_end - x_start;

@@ -1,16 +1,1 @@
-include ../include_top.mac
-
-INCLUDES   = ${INCLUDES_COMMON}
-#CFLAGS     = ${CFLAGS_COMMON} ${INCLUDES} -DNDEBUG -DGL_SILENCE_DEPRECATION
-CFLAGS     = ${CFLAGS_COMMON} ${INCLUDES} -DGL_SILENCE_DEPRECATION
-LDFLAGS    = ${LDFLAGS_COMMON}
-EXECUTABLE = ../../bin/unitTests
-
-SOURCES    = unitTests.cpp \
-						 ../../src/Hyperelastic/SNH.cpp \
-						 ../../src/Timestepper/TIMESTEPPER.cpp \
-						 ../../src/Timestepper/FORWARD_EULER.cpp \
-						 ../../src/Geometry/SQUARE.cpp \
-						 ../../src/Geometry/TRIANGLE_MESH.cpp 
-
-include ../include_bottom.mk
+Makefile.mac

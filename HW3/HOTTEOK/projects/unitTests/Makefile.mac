@@ -6,7 +6,6 @@ LDFLAGS    = ${LDFLAGS_COMMON}
 EXECUTABLE = ../../bin/unitTests
 
 SOURCES    = unitTests.cpp \
-						 ../../src/Hyperelastic/STVK.cpp \
 						 ../../src/Hyperelastic/SNH.cpp \
 						 ../../src/Timestepper/TIMESTEPPER.cpp \
 						 ../../src/Timestepper/FORWARD_EULER.cpp \

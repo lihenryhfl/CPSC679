@@ -140,7 +140,7 @@ void TRIANGLE_MESH::computeBoundaryEdgesAndVertices(REAL probeEps)
         for (int k = 0; k < _vertices.size(); k++) {
           if (isVertexInTriangle(_vertices[k], t)) {
             REAL dist = distanceFromEdge(_vertices[k], _vertices[idx1], _vertices[idx2]);
-            if ((dist < _eps) && (dist > (-_interiorScaling * _eps))) {
+            if (dist > (-_interiorScaling * _eps)) {
               //cout << "current edge vertices: " << idx1 << " and " << idx2 << ", neighbor: " << k <<endl;
               neighbors.push_back(k);
             }
@@ -420,15 +420,15 @@ VECTOR TRIANGLE_MESH::computeCollisionForces(const MATERIAL* material) const
   const int DOFs = _vertices.size() * 2;
   VECTOR forces(DOFs);
   forces.setZero();
+
+  // check each boundary vertex against each boundary edge
   for (unsigned int i = 0; i < _boundaryVertices.size(); i++) {
     for (unsigned int j = 0; j < _boundaryEdges.size(); j++) {
       int idxs [3] = {_boundaryVertices[i], _boundaryEdges[j][0], _boundaryEdges[j][1]};
 
       // check if vertex is an edge neighbor
       bool neighbor = false;
-      //cout << "idx0 " << idxs[0] << ", idx1 " << idxs[1] << ", idx2 " << idxs[2] << endl;
       for (int k = 0; k < _boundaryEdgeNeighbors[j].size(); k++) {
-        //cout << _boundaryEdgeNeighbors[j][k] << endl;
         if (_boundaryEdgeNeighbors[j][k] == idxs[0]) {
           neighbor = true;
           continue;
@@ -442,7 +442,7 @@ VECTOR TRIANGLE_MESH::computeCollisionForces(const MATERIAL* material) const
       VECTOR2 x0 = _vertices[idxs[0]], x1 = _vertices[idxs[1]], x2 = _vertices[idxs[2]];
       if (isVertexInTriangle(x0, t)) {
         REAL dist = distanceFromEdge(x0, x1, x2);
-        if ((dist < eps) && (dist > (-_interiorScaling * eps))) {
+        if (dist > (-_interiorScaling * eps)) {
           VECTOR6 x;
           x << x0, x1, x2;
           REAL area = _boundaryVertexAreas[i] + _boundaryEdgeAreas[j];
@@ -470,6 +470,8 @@ MATRIX TRIANGLE_MESH::computeCollisionHessian(const MATERIAL* material, bool uni
   const int DOFs = _vertices.size() * 2;
   MATRIX K(DOFs, DOFs);
   K.setZero();
+
+  // check each boundary vertex against each boundary edge
   for (unsigned int i = 0; i < _boundaryVertices.size(); i++) {
     for (unsigned int j = 0; j < _boundaryEdges.size(); j++) {
       int idxs [3] = {_boundaryVertices[i], _boundaryEdges[j][0], _boundaryEdges[j][1]};
@@ -490,7 +492,7 @@ MATRIX TRIANGLE_MESH::computeCollisionHessian(const MATERIAL* material, bool uni
       VECTOR2 x0 = _vertices[idxs[0]], x1 = _vertices[idxs[1]], x2 = _vertices[idxs[2]];
       if (isVertexInTriangle(x0, t)) {
         REAL dist = distanceFromEdge(x0, x1, x2);
-        if ((dist < eps) && (dist > (-_interiorScaling * eps))) {
+        if (dist > (-_interiorScaling * eps)) {
           VECTOR6 x;
           x << x0, x1, x2;
           REAL area = _boundaryVertexAreas[i] + _boundaryEdgeAreas[j];

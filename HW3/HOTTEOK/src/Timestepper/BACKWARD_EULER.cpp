@@ -32,6 +32,8 @@ bool BACKWARD_EULER::solve(const bool verbose)
   _triangleMesh.computeFs();
   VECTOR fInternal = _triangleMesh.computeMaterialForces(&_hyperelastic);
   cout << " R norm: " << fInternal.norm() << " _dt: " << _dt << endl;
+  fInternal += _triangleMesh.computeCollisionForces(&_hyperelastic);
+  cout << " R norm with collisions: " << fInternal.norm() << endl;
 
   // build filter matrix (S matrix from lecture)
   const int DOFs = _triangleMesh.DOFs();
@@ -75,8 +77,9 @@ bool BACKWARD_EULER::solve(const bool verbose)
     }
   }
 
-  MATRIX dfdx = _triangleMesh.computeStiffnessMatrix(&_hyperelastic);
-  MATRIX A = _M - (_dt * _dt) * dfdx;
+  MATRIX K = _triangleMesh.computeStiffnessMatrix(&_hyperelastic);
+  K += _triangleMesh.computeCollisionHessian(&_hyperelastic);
+  MATRIX A = _M - (_dt * _dt) * K;
   MATRIX A_ = filter * A * filter.transpose() + (eye - filter);
   VECTOR b = (_dt * _dt) * (fInternal + _externalForces) + _dt * _M * _velocity;
   VECTOR b_ = filter * (b - A * z);

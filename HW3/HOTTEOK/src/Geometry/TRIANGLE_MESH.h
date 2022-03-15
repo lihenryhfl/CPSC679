@@ -11,7 +11,8 @@ class TRIANGLE_MESH
 {
 public:
   TRIANGLE_MESH(const std::vector<VECTOR2>& restVertices,
-                const std::vector<VECTOR3I>& triangles);
+                const std::vector<VECTOR3I>& triangles,
+                REAL eps);
   ~TRIANGLE_MESH();
 
   const std::vector<VECTOR3I>& triangles() { return _triangles; };
@@ -63,13 +64,19 @@ private:
   // collision detection / resolution functions
   std::vector<int> _boundaryVertices;
   std::vector<VECTOR2I> _boundaryEdges;
+  std::vector<VECTOR3I> _boundaryEdgeTriangles;
+  std::vector<std::vector<int>> _boundaryEdgeNeighbors;
   std::vector<REAL> _boundaryVertexAreas;
   std::vector<REAL> _boundaryEdgeAreas;
-  bool isVertexInTriangle(const VECTOR2& xquery, const VECTOR3I& triangle, REAL eps = 2e-2);
+  REAL distanceFromEdge(const VECTOR2& x, const VECTOR2& edge_start, const VECTOR2& edge_end) const;
+  bool isVertexInTriangle(const VECTOR2& xquery, const VECTOR3I& triangle, REAL eps = 2e-2) const;
   void computeBoundaryEdgesAndVertices(REAL probeEps = 1e-3);
 
   // for convenience, the 270 deg rotation matrix
   MATRIX2 _R;
+  REAL _eps;
+  REAL _interiorScaling;
+  REAL _areaMultiplier;
 
   // did you recompute F after setting the displacements or positions?
   bool _staleFs;

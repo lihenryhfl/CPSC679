@@ -134,15 +134,15 @@ REAL SNH::cpsi(const VECTOR6& x) const
 ///////////////////////////////////////////////////////////////////////
 MATRIX SNH::cPK1(const VECTOR6& x) const
 {
-  MATRIX g = MATRIX(1, 6);
+  MATRIX g = MATRIX(6, 1);
   VECTOR2 x0, x1, x2, n, t;
   x0 << x[0], x[1];
   x1 << x[2], x[3];
   x2 << x[4], x[5];
   n = normal(x);
   t = x0 - x1;
-  g = n.transpose() * dtdx(x) + t.transpose() * normalJacobian(x);
-  return 2 * _mu * (n.transpose() * t - _eps) * g;
+  g = dtdx(x).transpose() * n + normalJacobian(x).transpose() * t;
+  return (2 * _mu * (n.transpose() * t - _eps) * g);
 }
 
 ///////////////////////////////////////////////////////////////////////

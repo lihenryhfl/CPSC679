@@ -53,6 +53,7 @@ REAL poissonsRatio = 0.45;
 //REAL youngsModulus = 1.0;
 //REAL youngsModulus = 5.0;
 REAL youngsModulus = 10.0;
+REAL eps = 0.02;
 
 TRIANGLE_MESH* triangleMesh = NULL;
 TIMESTEPPER* integrator = NULL;
@@ -265,6 +266,7 @@ void glutIdle()
     VECTOR2 gravity(0.0, -1);
     //VECTOR2 gravity(0.0, 0);
     integrator->addGravity(gravity);
+    integrator->findCollidedVertices(squares);
     integrator->solve(true);
     frame++;
 
@@ -464,7 +466,7 @@ void readSquare()
   triangles[0] = VECTOR3I(0,1,2);
   triangles[1] = VECTOR3I(1,3,2);
 
-  triangleMesh = new TRIANGLE_MESH(nodes, triangles);
+  triangleMesh = new TRIANGLE_MESH(nodes, triangles, eps);
 
   const REAL mu     = MATERIAL::computeMu(youngsModulus, poissonsRatio);
   const REAL lambda = MATERIAL::computeLambda(youngsModulus, poissonsRatio);
@@ -501,7 +503,7 @@ void readTriangle()
   triangles.resize(1);
   triangles[0] = VECTOR3I(0,1,2);
 
-  triangleMesh = new TRIANGLE_MESH(nodes, triangles);
+  triangleMesh = new TRIANGLE_MESH(nodes, triangles, eps);
   const REAL mu     = MATERIAL::computeMu(youngsModulus, poissonsRatio);
   const REAL lambda = MATERIAL::computeLambda(youngsModulus, poissonsRatio);
   //material = new STVK(mu, lambda);
@@ -518,7 +520,7 @@ void readE()
   vector<VECTOR3I> triangles;
 
   loadTriangles2D("./data/E/E.1", nodes, triangles);
-  triangleMesh = new TRIANGLE_MESH(nodes, triangles);
+  triangleMesh = new TRIANGLE_MESH(nodes, triangles, eps);
   const REAL mu     = MATERIAL::computeMu(youngsModulus, poissonsRatio);
   const REAL lambda = MATERIAL::computeLambda(youngsModulus, poissonsRatio);
   cout << " Mu: " << mu << " Lambda: " << lambda << endl;
@@ -533,6 +535,7 @@ void readE()
 
   // pin down the vertices inside the ceiling
   integrator->applyPinConstraints(ceiling);
+  squares.push_back(ceiling);
 
   eyeCenter  = VECTOR3(-0.043, -0.18, 1);
 }
@@ -545,7 +548,7 @@ void readC()
   vector<VECTOR3I> triangles;
 
   loadTriangles2D("./data/C/C.1", nodes, triangles);
-  triangleMesh = new TRIANGLE_MESH(nodes, triangles);
+  triangleMesh = new TRIANGLE_MESH(nodes, triangles, eps);
   const REAL mu     = MATERIAL::computeMu(youngsModulus, poissonsRatio);
   const REAL lambda = MATERIAL::computeLambda(youngsModulus, poissonsRatio);
   cout << " Mu: " << mu << " Lambda: " << lambda << endl;
@@ -558,6 +561,7 @@ void readC()
   ceiling = SQUARE(VECTOR2(0,-0.95), 1.0);
   // pin down the vertices inside the ceiling
   integrator->applyPinConstraints(ceiling);
+  squares.push_back(ceiling);
 
   eyeCenter  = VECTOR3(-0.043, -0.18, 1);
 }
@@ -568,8 +572,17 @@ int main(int argc, char** argv)
 {
   cout << " Usage: " << argv[0] << endl;
 
-  readC();
-  //readE();
+  if (argc > 1 && !strcmp(argv[1], "C")) {
+    cout << "LOADING C" << endl;
+    readC();
+  }
+  else if (argc > 1 && !strcmp(argv[1], "E")) {
+    cout << "LOADING E" << endl;
+    readE();
+  } else {
+    cout << "COMMAND NOT RECOGNIZED" << endl;
+    return 2;
+  }
   //readTriangle();
   //readSquare();
 

@@ -151,14 +151,14 @@ bool convergenceTestCJ(const SNH* material, const VECTOR6 &x)
   cout << "=============================================================== " << endl;
 
   REAL psi0 = material->cpsi(x);
-  MATRIX P = material->cPK1(x); // shape (1, 6)
+  MATRIX P = material->cPK1(x); // shape (6, 1)
 
   double eps = 1e-4;
   int e = 0;
   double minSeen = FLT_MAX;
   while (eps > 1e-8)
   {
-    MATRIX finiteDiffP = MATRIX(1, 6);
+    MATRIX finiteDiffP = MATRIX(6, 1);
     finiteDiffP.setZero();
 
     // for each of the degrees of the freedom
@@ -169,7 +169,7 @@ bool convergenceTestCJ(const SNH* material, const VECTOR6 &x)
       REAL psi = material->cpsi(xnew);
 
       // store the finite difference
-      finiteDiffP(0, i) = (psi - psi0) / eps;
+      finiteDiffP(i, 0) = (psi - psi0) / eps;
     }
 
     MATRIX diff = P - finiteDiffP;
@@ -233,7 +233,7 @@ bool convergenceTestCH(const SNH* material, const VECTOR6 &x)
       // store the finite difference
       MATRIX diff = (J - J0) / eps;
       for (int j = 0; j < 6; j++)
-        finiteDiff(j,i) = diff(0,j);
+        finiteDiff(j,i) = diff(j,0);
     }
 
     MATRIX diff = H - finiteDiff;
@@ -429,7 +429,7 @@ VECTOR randomVector(const int DOFs, const REAL scaling)
 }
 
 //////////////////////////////////////////////////////////////////////////////
-// do a convergence test on Hessian
+// do a convergence test on full K Hessian
 //////////////////////////////////////////////////////////////////////////////
 bool convergenceTestK(const MATERIAL* material, TRIANGLE_MESH& mesh)
 {
@@ -501,6 +501,77 @@ bool convergenceTestK(const MATERIAL* material, TRIANGLE_MESH& mesh)
   return true;
 }
 
+//////////////////////////////////////////////////////////////////////////////
+// do a convergence test on full K Hessian
+//////////////////////////////////////////////////////////////////////////////
+bool convergenceTestKCollision(const MATERIAL* material, TRIANGLE_MESH& mesh)
+{
+  cout << "=============================================================== " << endl;
+  cout << " VERIFYING Collision K for material " << material->name().c_str() << endl;
+  cout << "=============================================================== " << endl;
+
+  const int DOFs = mesh.DOFs();
+  const VECTOR x0 = randomVector(DOFs, 1.0);
+  // if things are really haywire, see if zero displacement works
+  //const VECTOR x0 = randomVector(DOFs, 0.0);
+
+  mesh.setDisplacement(x0);
+  const MATRIX K = mesh.computeCollisionHessian(material, true);
+  const VECTOR f = mesh.computeCollisionForces(material);
+
+  double eps = 1e-4;
+  int e = 0;
+  double minSeen = FLT_MAX;
+  while (eps > 1e-8)
+  {
+    MATRIX finiteDiff(DOFs, DOFs);
+
+    // for each of the degrees of the freedom
+    for (int x = 0; x < DOFs; x++)
+    {
+      VECTOR xNew = x0;
+      xNew[x] += eps;
+      mesh.setDisplacement(xNew);
+
+      VECTOR fNew = mesh.computeCollisionForces(material);
+
+      // store the finite difference
+      VECTOR diff = (fNew - f) / eps;
+      finiteDiff.col(x) = diff;
+    }
+
+    MATRIX diff = K - finiteDiff;
+    REAL diffNorm = (fabs(diff.norm() / K.norm())) / (DOFs * DOFs);
+    if (diffNorm < minSeen)
+      minSeen = diffNorm;
+    cout << "eps: " << eps << " diff: " << diffNorm << endl;
+
+    if (e == 4 && minSeen > 1e-6)
+    {
+      cout << " TEST FAILED!!!!!" << endl;
+      cout << " K: " << endl << K << endl;
+      cout << " finite diff: " << endl << finiteDiff << endl;
+      cout << " diff: " << endl << diff << endl;
+
+      cout << " K norm: " << K.squaredNorm() << endl;
+      cout << " finite diff  norm: " << finiteDiff.squaredNorm() << endl;
+      return false;
+    }
+    eps *= 0.1;
+    e++;
+  }
+  if (minSeen < 1e-6)
+  {
+    cout << " TEST PASSED. " << endl;
+  }
+  else
+  {
+    cout << " TEST FAILED. " << endl;
+    return false;
+  }
+  return true;
+}
+
 ///////////////////////////////////////////////////////////////////////
 // Let's make some random deformation gradients
 ///////////////////////////////////////////////////////////////////////
@@ -528,8 +599,9 @@ int main(int argc, char** argv)
 {
   MATRIX2 F = randomMatrix2(10.0);
   VECTOR6 x = randomVector(6, 1.0);
+  REAL eps = 0.02;
   //STVK stvk(1.0, 1.0);
-  SNH material(1.0, 1.0);
+  SNH material(1.0, 1.0, eps);
   convergenceTestNJ(&material, x);
   convergenceTestNH(&material, x);
   convergenceTestCJ(&material, x);
@@ -548,7 +620,8 @@ int main(int argc, char** argv)
   triangles.resize(2);
   triangles[0] = VECTOR3I(0,1,2);
   triangles[1] = VECTOR3I(1,3,2);
-  TRIANGLE_MESH triangleMesh(nodes, triangles);
+  TRIANGLE_MESH triangleMesh(nodes, triangles, eps);
   convergenceTestK(&material, triangleMesh);
+  convergenceTestKCollision(&material, triangleMesh);
   return 1;
 }

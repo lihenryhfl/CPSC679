@@ -56,6 +56,7 @@ REAL youngsModulus = 10.0;
 //REAL youngsModulus = 25.0;
 //REAL youngsModulus = 50.0;
 REAL gravityConstant = -1.0;
+REAL eps = 0.02;
 
 TRIANGLE_MESH* triangleMesh = NULL;
 TIMESTEPPER* integrator = NULL;
@@ -473,7 +474,7 @@ void readSquare()
   triangles[0] = VECTOR3I(0,1,2);
   triangles[1] = VECTOR3I(1,3,2);
 
-  triangleMesh = new TRIANGLE_MESH(nodes, triangles);
+  triangleMesh = new TRIANGLE_MESH(nodes, triangles, eps);
 
   const REAL mu     = MATERIAL::computeMu(youngsModulus, poissonsRatio);
   const REAL lambda = MATERIAL::computeLambda(youngsModulus, poissonsRatio);
@@ -513,7 +514,7 @@ void readSquare2()
   triangles[0] = VECTOR3I(0,1,2);
   triangles[1] = VECTOR3I(1,3,2);
 
-  triangleMesh = new TRIANGLE_MESH(nodes, triangles);
+  triangleMesh = new TRIANGLE_MESH(nodes, triangles, eps);
 
   const REAL mu     = MATERIAL::computeMu(youngsModulus, poissonsRatio);
   const REAL lambda = MATERIAL::computeLambda(youngsModulus, poissonsRatio);
@@ -594,7 +595,7 @@ void readTriangle()
   triangles.resize(1);
   triangles[0] = VECTOR3I(0,1,2);
 
-  triangleMesh = new TRIANGLE_MESH(nodes, triangles);
+  triangleMesh = new TRIANGLE_MESH(nodes, triangles, eps);
   const REAL mu     = MATERIAL::computeMu(youngsModulus, poissonsRatio);
   const REAL lambda = MATERIAL::computeLambda(youngsModulus, poissonsRatio);
   //material = new STVK(mu, lambda);
@@ -611,7 +612,7 @@ void readBunny()
   vector<VECTOR3I> triangles;
 
   loadTriangles2D("./data/bunny/bunny.1", nodes, triangles);
-  triangleMesh = new TRIANGLE_MESH(nodes, triangles);
+  triangleMesh = new TRIANGLE_MESH(nodes, triangles, eps);
   const REAL mu     = MATERIAL::computeMu(youngsModulus, poissonsRatio);
   const REAL lambda = MATERIAL::computeLambda(youngsModulus, poissonsRatio);
   cout << " Mu: " << mu << " Lambda: " << lambda << endl;
@@ -682,7 +683,7 @@ void readBunny2()
   vector<VECTOR3I> triangles;
 
   loadTriangles2D("./data/bunny/bunny.1", nodes, triangles);
-  triangleMesh = new TRIANGLE_MESH(nodes, triangles);
+  triangleMesh = new TRIANGLE_MESH(nodes, triangles, eps);
   const REAL mu     = MATERIAL::computeMu(youngsModulus, poissonsRatio);
   const REAL lambda = MATERIAL::computeLambda(youngsModulus, poissonsRatio);
   cout << " Mu: " << mu << " Lambda: " << lambda << endl;
@@ -747,7 +748,7 @@ void readCustom()
   vector<VECTOR3I> triangles;
 
   loadTriangles2D("./data/custom/custom.1", nodes, triangles);
-  triangleMesh = new TRIANGLE_MESH(nodes, triangles);
+  triangleMesh = new TRIANGLE_MESH(nodes, triangles, eps);
   const REAL mu     = MATERIAL::computeMu(youngsModulus, poissonsRatio);
   const REAL lambda = MATERIAL::computeLambda(youngsModulus, poissonsRatio);
   cout << " Mu: " << mu << " Lambda: " << lambda << endl;

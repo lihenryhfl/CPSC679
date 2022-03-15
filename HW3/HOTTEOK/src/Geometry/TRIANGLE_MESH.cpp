@@ -8,16 +8,20 @@
 using namespace std;
 
 TRIANGLE_MESH::TRIANGLE_MESH(const std::vector<VECTOR2>& restVertices,
-                             const std::vector<VECTOR3I>& triangles) :
+                             const std::vector<VECTOR3I>& triangles,
+                             REAL eps) :
   _vertices(restVertices),
   _restVertices(restVertices),
-  _triangles(triangles)
+  _triangles(triangles),
+  _eps(eps)
 {
   _DmInvs.resize(_triangles.size());
   _Fs.resize(_triangles.size());
   _restAreas.resize(_triangles.size());
   _oneRingAreas.resize(_vertices.size());
   _pFpxs.resize(_triangles.size());
+  _interiorScaling = 2.;
+  _areaMultiplier = 6.;
 
   // precompute the Dm inverses
   for (unsigned int x = 0; x < _triangles.size(); x++)
@@ -37,15 +41,16 @@ TRIANGLE_MESH::TRIANGLE_MESH(const std::vector<VECTOR2>& restVertices,
   computeAreas();
 
   _R << 0., 1., -1., 0.;
+  //_R << 0., -1., 1., 0.;
 
   // compute boundary edges
   computeBoundaryEdgesAndVertices();
 
-  //for (unsigned int k = 0; k < _boundaryVertices.size(); k++)
-    //cout << "k = " << k << ", _boundaryVertex: " << _boundaryVertices[k] << endl;
+  for (unsigned int k = 0; k < _boundaryVertices.size(); k++)
+    cout << "k = " << k << ", _boundaryVertex: " << _boundaryVertices[k] << endl;
 
-  //for (unsigned int k = 0; k < _boundaryEdges.size(); k++)
-    //cout << "k = " << k << ", _boundaryEdges: " << _boundaryEdges[k] << endl;
+  for (unsigned int k = 0; k < _boundaryEdges.size(); k++)
+    cout << "k = " << k << ", _boundaryEdges: " << _boundaryEdges[k] << endl;
 
   _staleFs = true;
 }
@@ -58,7 +63,17 @@ TRIANGLE_MESH::~TRIANGLE_MESH()
 // find the boundary edges, and build requisite data structures
 // for collision detection + resolution
 ///////////////////////////////////////////////////////////////////////
-bool TRIANGLE_MESH::isVertexInTriangle(const VECTOR2& xquery, const VECTOR3I& triangle, REAL eps)
+REAL TRIANGLE_MESH::distanceFromEdge(const VECTOR2& x, const VECTOR2& edge_start, const VECTOR2& edge_end) const
+{
+    VECTOR2 diff = edge_end - edge_start;
+    VECTOR2 normal = _R * diff / diff.norm();
+    REAL bias = -normal.transpose() * edge_start;
+    REAL dist = x.transpose() * normal + bias;
+    return dist;
+}
+
+
+bool TRIANGLE_MESH::isVertexInTriangle(const VECTOR2& xquery, const VECTOR3I& triangle, REAL eps) const
 {
   // is vertex x_i inside the given triangle?
   // idea: compute three hyperplanes corresponding to the three sides
@@ -74,14 +89,10 @@ bool TRIANGLE_MESH::isVertexInTriangle(const VECTOR2& xquery, const VECTOR3I& tr
   std::vector<VECTOR2> tVerts {x0, x1, x2};
   for (int i = 0; i < 3; i++) {
     VECTOR2 x_start = tVerts[i], x_end = tVerts[(i + 1) % 3];
-    VECTOR2 diff = x_end - x_start;
-    VECTOR2 normal = _R * diff / diff.norm();
-    REAL bias = -normal.transpose() * x_start;
-    REAL dist = xquery.transpose() * normal + bias;
-
+    REAL dist = distanceFromEdge(xquery, x_start, x_end);
     // sanity check: the third vertex is always on the
     // "negative" side of the hyperplane, right?
-    assert((tVerts[(i + 2) % 3].transpose() * normal + bias) < 0);
+    //assert(distanceFromEdge(tVerts[(i + 2) % 3], x_start, x_end) <= 0);
 
     if (dist > eps)
       return false;
@@ -120,13 +131,25 @@ void TRIANGLE_MESH::computeBoundaryEdgesAndVertices(REAL probeEps)
         }
       }
       if (exterior) {
-        int idx1 = t[j], idx2 = t[(j + 1) % 3], idx3 = t[(j + 2) % 3];
+        int idx1 = t[j], idx2 = t[(j + 1) % 3];
 
         // add to _boundaryEdges
         VECTOR2I edge(idx1, idx2);
         REAL edgeArea = (_vertices[idx2] - _vertices[idx1]).norm();
+        std::vector<int> neighbors;
+        for (int k = 0; k < _vertices.size(); k++) {
+          if (isVertexInTriangle(_vertices[k], t)) {
+            REAL dist = distanceFromEdge(_vertices[k], _vertices[idx1], _vertices[idx2]);
+            if ((dist < _eps) && (dist > (-_interiorScaling * _eps))) {
+              cout << "current edge vertices: " << idx1 << " and " << idx2 << ", neighbor: " << k <<endl;
+              neighbors.push_back(k);
+            }
+          }
+        }
         _boundaryEdges.push_back(edge);
         _boundaryEdgeAreas.push_back(edgeArea);
+        _boundaryEdgeNeighbors.push_back(neighbors);
+        _boundaryEdgeTriangles.push_back(t);
 
         // add to _boundaryVertices IF it doesn't already exist
         bool alreadyAdded1 = false, alreadyAdded2 = false;
@@ -137,18 +160,23 @@ void TRIANGLE_MESH::computeBoundaryEdgesAndVertices(REAL probeEps)
             alreadyAdded2 = true;
         }
         if (!alreadyAdded1) {
-          REAL vertexArea1 = 0.5 * ((_vertices[idx2] - _vertices[idx1]).norm()
-            + (_vertices[idx3] - _vertices[idx1]).norm());
           _boundaryVertices.push_back(idx1);
-          _boundaryVertexAreas.push_back(vertexArea1);
+          _boundaryVertexAreas.push_back(0.);
         }
         if (!alreadyAdded2) {
-          REAL vertexArea2 = 0.5 * ((_vertices[idx1] - _vertices[idx2]).norm()
-            + (_vertices[idx3] - _vertices[idx2]).norm());
           _boundaryVertices.push_back(idx2);
-          _boundaryVertexAreas.push_back(vertexArea2);
+          _boundaryVertexAreas.push_back(0.);
         }
       }
+    }
+  }
+
+  // compute vertex areas
+  for (unsigned int i = 0; i < _boundaryVertices.size(); i++) {
+    for (unsigned int j = 0; j < _boundaryEdges.size(); j++) {
+      int idx0 = _boundaryVertices[i], idx1 = _boundaryEdges[j][0], idx2 = _boundaryEdges[j][1];
+      if ((idx0 == idx1) || (idx0 == idx2))
+        _boundaryVertexAreas[i] += 0.5 * (_vertices[idx1] - _vertices[idx2]).norm();
     }
   }
 }
@@ -342,22 +370,6 @@ VECTOR TRIANGLE_MESH::computeMaterialForces(const MATERIAL* material) const
 }
 
 ///////////////////////////////////////////////////////////////////////
-// clamp the eigenvalues of a 9x9 to semi-positive-definite
-///////////////////////////////////////////////////////////////////////
-//MATRIX4 clampEigenvalues(const MATRIX4& A)
-//{
-  //// clamp directly
-  //Eigen::SelfAdjointEigenSolver<MATRIX4> eigensolver(A);
-  //const MATRIX4 Q = eigensolver.eigenvectors();
-  //VECTOR4 values = eigensolver.eigenvalues();
-  //for (int x = 0; x < 4; x++)
-    //values[x] = (values[x] > 0.0) ? values[x] : 0.0;
-  //MATRIX4 B = Q * values.asDiagonal() * Q.transpose();
-
-  //return B;
-//}
-
-///////////////////////////////////////////////////////////////////////
 // compute the stiffness matrix
 ///////////////////////////////////////////////////////////////////////
 MATRIX TRIANGLE_MESH::computeStiffnessMatrix(const MATERIAL* material, bool unitTest) const
@@ -392,16 +404,7 @@ MATRIX TRIANGLE_MESH::computeStiffnessMatrix(const MATERIAL* material, bool unit
       for (int x = 0; x < 3; x++)
       {
         int xVertex = t[x];
-        for (int b = 0; b < 2; b++)
-          for (int a = 0; a < 2; a++)
-          {
-            assert(2 * x + a < 6);
-            assert(2 * y + b < 6);
-            assert(2 * xVertex + a < DOFs);
-            assert(2 * yVertex + b < DOFs);
-            const REAL entry = H(2 * x + a, 2 * y + b);
-            K(2 * xVertex + a, 2 * yVertex + b) += entry;
-          }
+        K.block(2 * xVertex, 2 * yVertex, 2, 2) += H.block(2 * x, 2 * y, 2, 2);
       }
     }
   }
@@ -413,34 +416,44 @@ MATRIX TRIANGLE_MESH::computeStiffnessMatrix(const MATERIAL* material, bool unit
 ///////////////////////////////////////////////////////////////////////
 VECTOR TRIANGLE_MESH::computeCollisionForces(const MATERIAL* material) const
 {
-  // you recomputed F, right?
-  assert(!_staleFs);
-
   REAL eps = material->getEps();
   const int DOFs = _vertices.size() * 2;
   VECTOR forces(DOFs);
   forces.setZero();
   for (unsigned int i = 0; i < _boundaryVertices.size(); i++) {
     for (unsigned int j = 0; j < _boundaryEdges.size(); j++) {
-      VECTOR2 x0 = _vertices[_boundaryVertices[i]];
-      VECTOR2 x1 = _vertices[_boundaryEdges[i][0]];
-      VECTOR2 x2 = _vertices[_boundaryEdges[i][1]];
-      VECTOR2 normal = _R * (x2 - x1) / (x2 - x1).norm();
-      // check for collision. if so, compute forces
-      if (normal.transpose() * (x0 - x1) < eps) {
-        VECTOR6 x;
-        x << x0, x1, x2;
-        REAL area = _boundaryVertexAreas[i] + _boundaryEdgeAreas[i];
-        const VECTOR6 forceDensity = material->cPK1(x);
-        const VECTOR6 force = -area * forceDensity;
+      int idxs [3] = {_boundaryVertices[i], _boundaryEdges[j][0], _boundaryEdges[j][1]};
 
-        // fill in corresponding values
-        forces[2 * _boundaryVertices[i]] += force[0];
-        forces[2 * _boundaryVertices[i] + 1] += force[1];
-        forces[2 * _boundaryEdges[i][0]] += force[2];
-        forces[2 * _boundaryEdges[i][0] + 1] += force[3];
-        forces[2 * _boundaryEdges[i][1]] += force[4];
-        forces[2 * _boundaryEdges[i][1] + 1] += force[5];
+      // check if vertex is an edge neighbor
+      bool neighbor = false;
+      //cout << "idx0 " << idxs[0] << ", idx1 " << idxs[1] << ", idx2 " << idxs[2] << endl;
+      for (int k = 0; k < _boundaryEdgeNeighbors[j].size(); k++) {
+        //cout << _boundaryEdgeNeighbors[j][k] << endl;
+        if (_boundaryEdgeNeighbors[j][k] == idxs[0]) {
+          neighbor = true;
+          continue;
+        }
+      }
+      if (neighbor)
+        continue;
+
+      // if not, continue collision check
+      const VECTOR3I& t = _boundaryEdgeTriangles[j];
+      VECTOR2 x0 = _vertices[idxs[0]], x1 = _vertices[idxs[1]], x2 = _vertices[idxs[2]];
+      if (isVertexInTriangle(x0, t)) {
+        REAL dist = distanceFromEdge(x0, x1, x2);
+        if ((dist < eps) && (dist > (-_interiorScaling * eps))) {
+          VECTOR6 x;
+          x << x0, x1, x2;
+          REAL area = _boundaryVertexAreas[i] + _boundaryEdgeAreas[j];
+          area = area * _areaMultiplier;
+          const VECTOR6 forceDensity = material->cPK1(x);
+          const VECTOR6 force = -area * forceDensity;
+
+          // fill in corresponding values
+          for (int k = 0; k < 3; k++)
+            forces.block(2 * idxs[k], 0, 2, 1) += force.block(2 * k, 0, 2, 1);
+        }
       }
     }
   }
@@ -453,46 +466,50 @@ VECTOR TRIANGLE_MESH::computeCollisionForces(const MATERIAL* material) const
 ///////////////////////////////////////////////////////////////////////
 MATRIX TRIANGLE_MESH::computeCollisionHessian(const MATERIAL* material, bool unitTest) const
 {
-  // you recomputed F, right?
-  assert(!_staleFs);
-
-  vector<MATRIX6> perElementHessians(_triangles.size());
-  for (unsigned int i = 0; i < _triangles.size(); i++)
-  {
-    const MATRIX2& F      = _Fs[i];
-    const MATRIX4x6& pFpx = _pFpxs[i];
-    if (unitTest) {
-      const MATRIX4 hessian = material->hessian(F);
-      perElementHessians[i] = -_restAreas[i] * (pFpx.transpose() * hessian) * pFpx;
-    } else {
-      const MATRIX4 projectedHessian = clampEigenvalues(material->hessian(F));
-      perElementHessians[i] = -_restAreas[i] * (pFpx.transpose() * projectedHessian) * pFpx;
-    }
-  }
-
+  REAL eps = material->getEps();
   const int DOFs = _vertices.size() * 2;
   MATRIX K(DOFs, DOFs);
   K.setZero();
-  for (unsigned int i = 0; i < _triangles.size(); i++)
-  {
-    const VECTOR3I& t = _triangles[i];
-    const MATRIX6& H = perElementHessians[i];
-    for (int y = 0; y < 3; y++)
-    {
-      int yVertex = t[y];
-      for (int x = 0; x < 3; x++)
-      {
-        int xVertex = t[x];
-        for (int b = 0; b < 2; b++)
-          for (int a = 0; a < 2; a++)
-          {
-            assert(2 * x + a < 6);
-            assert(2 * y + b < 6);
-            assert(2 * xVertex + a < DOFs);
-            assert(2 * yVertex + b < DOFs);
-            const REAL entry = H(2 * x + a, 2 * y + b);
-            K(2 * xVertex + a, 2 * yVertex + b) += entry;
+  for (unsigned int i = 0; i < _boundaryVertices.size(); i++) {
+    for (unsigned int j = 0; j < _boundaryEdges.size(); j++) {
+      int idxs [3] = {_boundaryVertices[i], _boundaryEdges[j][0], _boundaryEdges[j][1]};
+
+      // check if vertex is an edge neighbor
+      bool neighbor = false;
+      for (int k = 0; k < _boundaryEdgeNeighbors[j].size(); k++) {
+        if (_boundaryEdgeNeighbors[j][k] == idxs[0]) {
+          neighbor = true;
+          continue;
+        }
+      }
+      if (neighbor)
+        continue;
+
+      // if not, continue collision check
+      const VECTOR3I& t = _boundaryEdgeTriangles[j];
+      VECTOR2 x0 = _vertices[idxs[0]], x1 = _vertices[idxs[1]], x2 = _vertices[idxs[2]];
+      if (isVertexInTriangle(x0, t)) {
+        REAL dist = distanceFromEdge(x0, x1, x2);
+        if ((dist < eps) && (dist > (-_interiorScaling * eps))) {
+          cout << "x0: " << idxs[0]
+            << " is in collision with " << idxs[1]
+            << " and " << idxs[2] << endl;
+          VECTOR6 x;
+          x << x0, x1, x2;
+          REAL area = _boundaryVertexAreas[i] + _boundaryEdgeAreas[j];
+          area = area * _areaMultiplier;
+          MATRIX hessian;
+          if (unitTest)
+            hessian = -area * material->cHessian(x);
+          else
+            hessian = -area * clampEigenvalues(material->cHessian(x));
+
+          for (int k = 0; k < 3; k++) {
+            for (int l = 0; l < 3; l++) {
+              K.block(idxs[k] * 2, idxs[l] * 2, 2, 2) += hessian.block(k * 2, l * 2, 2, 2);
+            }
           }
+        }
       }
     }
   }

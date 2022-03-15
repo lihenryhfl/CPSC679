@@ -79,9 +79,10 @@ bool BACKWARD_EULER::solve(const bool verbose)
 
   MATRIX K = _triangleMesh.computeStiffnessMatrix(&_hyperelastic);
   K += _triangleMesh.computeCollisionHessian(&_hyperelastic);
-  MATRIX A = _M - (_dt * _dt) * K;
+  MATRIX C = 0.01 * _M + 0.01 * K;
+  MATRIX A = _M - (_dt * _dt) * K - _dt * C;
   MATRIX A_ = filter * A * filter.transpose() + (eye - filter);
-  VECTOR b = (_dt * _dt) * (fInternal + _externalForces) + _dt * _M * _velocity;
+  VECTOR b = (_dt * _dt) * (fInternal + _externalForces - C * _velocity) + _dt * _M * _velocity;
   VECTOR b_ = filter * (b - A * z);
   VECTOR y = A_.colPivHouseholderQr().solve(b_);
 

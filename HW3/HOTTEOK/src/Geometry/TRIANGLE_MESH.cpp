@@ -46,11 +46,11 @@ TRIANGLE_MESH::TRIANGLE_MESH(const std::vector<VECTOR2>& restVertices,
   // compute boundary edges
   computeBoundaryEdgesAndVertices();
 
-  for (unsigned int k = 0; k < _boundaryVertices.size(); k++)
-    cout << "k = " << k << ", _boundaryVertex: " << _boundaryVertices[k] << endl;
+  //for (unsigned int k = 0; k < _boundaryVertices.size(); k++)
+    //cout << "k = " << k << ", _boundaryVertex: " << _boundaryVertices[k] << endl;
 
-  for (unsigned int k = 0; k < _boundaryEdges.size(); k++)
-    cout << "k = " << k << ", _boundaryEdges: " << _boundaryEdges[k] << endl;
+  //for (unsigned int k = 0; k < _boundaryEdges.size(); k++)
+    //cout << "k = " << k << ", _boundaryEdges: " << _boundaryEdges[k] << endl;
 
   _staleFs = true;
 }
@@ -141,7 +141,7 @@ void TRIANGLE_MESH::computeBoundaryEdgesAndVertices(REAL probeEps)
           if (isVertexInTriangle(_vertices[k], t)) {
             REAL dist = distanceFromEdge(_vertices[k], _vertices[idx1], _vertices[idx2]);
             if ((dist < _eps) && (dist > (-_interiorScaling * _eps))) {
-              cout << "current edge vertices: " << idx1 << " and " << idx2 << ", neighbor: " << k <<endl;
+              //cout << "current edge vertices: " << idx1 << " and " << idx2 << ", neighbor: " << k <<endl;
               neighbors.push_back(k);
             }
           }
@@ -491,9 +491,6 @@ MATRIX TRIANGLE_MESH::computeCollisionHessian(const MATERIAL* material, bool uni
       if (isVertexInTriangle(x0, t)) {
         REAL dist = distanceFromEdge(x0, x1, x2);
         if ((dist < eps) && (dist > (-_interiorScaling * eps))) {
-          cout << "x0: " << idxs[0]
-            << " is in collision with " << idxs[1]
-            << " and " << idxs[2] << endl;
           VECTOR6 x;
           x << x0, x1, x2;
           REAL area = _boundaryVertexAreas[i] + _boundaryEdgeAreas[j];

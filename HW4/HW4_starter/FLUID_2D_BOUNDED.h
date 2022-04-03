@@ -40,12 +40,6 @@ private:
 
   // step velocity field
   virtual void stepVelocity();
-
-  // solve the system using conjugate gradients
-  void conjugateGradient(FIELD_2D& pressure, FIELD_2D& divergence);
-
-  // solve the system using preconditioned conjugate gradients
-  void preconditionedConjugateGradient(FIELD_2D& pressure, FIELD_2D& divergence);
 };
 
 #endif

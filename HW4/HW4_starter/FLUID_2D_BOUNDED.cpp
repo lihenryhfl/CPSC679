@@ -213,19 +213,3 @@ void FLUID_2D_BOUNDED::stepVelocity()
   advect(_xVelocity, _xVelocityOld, _xVelocityOld, _yVelocityOld);
   advect(_yVelocity, _yVelocityOld, _xVelocityOld, _yVelocityOld);
 }
-
-///////////////////////////////////////////////////////////////////////
-// solve the system using conjugate gradients
-///////////////////////////////////////////////////////////////////////
-void FLUID_2D_BOUNDED::conjugateGradient(FIELD_2D& pressure, FIELD_2D& divergence)
-{
-  // IMPLEMENT ME
-}
-
-///////////////////////////////////////////////////////////////////////
-// solve the system using conjugate gradients
-///////////////////////////////////////////////////////////////////////
-void FLUID_2D_BOUNDED::preconditionedConjugateGradient(FIELD_2D& pressure, FIELD_2D& divergence)
-{
-  // IMPLEMENT ME
-}

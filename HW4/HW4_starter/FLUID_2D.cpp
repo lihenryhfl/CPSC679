@@ -8,7 +8,7 @@
 
 #include "FLUID_2D.h"
 #include <cmath>
-#define SOLVER_ACCURACY 1e-06
+#define SOLVER_ACCURACY 1e-08
 
 ///////////////////////////////////////////////////////////////////////
 // Constructor / Destructor
@@ -360,4 +360,12 @@ void FLUID_2D::gaussSeidel(FIELD_2D& pressure, FIELD_2D& divergence, int iterati
 			  pressure(x,y) = (divergence(x,y) + pressure(x-1,y) + pressure(x+1,y) + pressure(x,y-1) + pressure(x,y+1)) * 0.25;
       // i.e.: p = d - Dp, where p is pressure, d is divergence, and D is the divergence operator
 	}
+}
+
+
+///////////////////////////////////////////////////////////////////////
+// Wavelet Turbulence
+///////////////////////////////////////////////////////////////////////
+void FLUID_2D::stepTurbulence(float dtOrg, FIELD_2D& xVelocity, FIELD_2D& yVelocity) {
+
 }

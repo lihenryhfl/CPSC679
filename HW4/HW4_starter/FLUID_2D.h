@@ -62,6 +62,8 @@ public:
 
   void solvePressure(FIELD_2D& field, FIELD_2D& b, int iterations=10);
 
+  void stepTurbulence(float dtOrg, FIELD_2D& xVelocity, FIELD_2D& yVelocity);
+
 protected:
   // simulation constants
   int _xRes;

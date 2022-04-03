@@ -69,13 +69,14 @@ private:
   std::vector<REAL> _boundaryVertexAreas;
   std::vector<REAL> _boundaryEdgeAreas;
   REAL distanceFromEdge(const VECTOR2& x, const VECTOR2& edge_start, const VECTOR2& edge_end) const;
-  bool isVertexInTriangle(const VECTOR2& xquery, const VECTOR3I& triangle, REAL eps = 2e-2) const;
+  bool isVertexInTriangle(const VECTOR2& xquery, const VECTOR3I& triangle, REAL eps = -1) const;
   void computeBoundaryEdgesAndVertices(REAL probeEps = 1e-3);
 
   // for convenience, the 270 deg rotation matrix
   MATRIX2 _R;
   REAL _eps;
   REAL _interiorScaling;
+  REAL _exteriorScaling;
   REAL _areaMultiplier;
 
   // did you recompute F after setting the displacements or positions?

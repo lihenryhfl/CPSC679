@@ -25,8 +25,8 @@
 using namespace std;
 
 // the resolution of the OpenGL window -- independent of the field resolution
-int xScreenRes = 800;
-int yScreenRes = 800;
+int xScreenRes = 750;
+int yScreenRes = 750;
 
 // Text for the title bar of the window
 string windowLabel("Pancake Simulator");

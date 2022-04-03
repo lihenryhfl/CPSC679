@@ -20,7 +20,8 @@ TRIANGLE_MESH::TRIANGLE_MESH(const std::vector<VECTOR2>& restVertices,
   _restAreas.resize(_triangles.size());
   _oneRingAreas.resize(_vertices.size());
   _pFpxs.resize(_triangles.size());
-  _interiorScaling = 2.;
+  _interiorScaling = 1.5;
+  _exteriorScaling = 1.5;
   _areaMultiplier = 6.;
 
   // precompute the Dm inverses
@@ -78,6 +79,9 @@ bool TRIANGLE_MESH::isVertexInTriangle(const VECTOR2& xquery, const VECTOR3I& tr
   // is vertex x_i inside the given triangle?
   // idea: compute three hyperplanes corresponding to the three sides
   // of the triangle. then test the sign of the new point
+  //
+  if (eps < 0)
+    eps = _eps;
 
   // get points
   VECTOR2 x0, x1, x2;
@@ -137,10 +141,12 @@ void TRIANGLE_MESH::computeBoundaryEdgesAndVertices(REAL probeEps)
         VECTOR2I edge(idx1, idx2);
         REAL edgeArea = (_vertices[idx2] - _vertices[idx1]).norm();
         std::vector<int> neighbors;
+        REAL extEps = _eps * _exteriorScaling;
+        REAL intEps = _eps * _interiorScaling;
         for (int k = 0; k < _vertices.size(); k++) {
-          if (isVertexInTriangle(_vertices[k], t)) {
+          if (isVertexInTriangle(_vertices[k], t, extEps)) {
             REAL dist = distanceFromEdge(_vertices[k], _vertices[idx1], _vertices[idx2]);
-            if (dist > (-_interiorScaling * _eps)) {
+            if (dist > -intEps) {
               //cout << "current edge vertices: " << idx1 << " and " << idx2 << ", neighbor: " << k <<endl;
               neighbors.push_back(k);
             }
@@ -495,6 +501,8 @@ MATRIX TRIANGLE_MESH::computeCollisionHessian(const MATERIAL* material, bool uni
         if (dist > (-_interiorScaling * eps)) {
           VECTOR6 x;
           x << x0, x1, x2;
+          cout << idxs[0] << " in collision with edge = (" << idxs[1]
+            << ", " << idxs[2] << ")" << endl;
           REAL area = _boundaryVertexAreas[i] + _boundaryEdgeAreas[j];
           area = area * _areaMultiplier;
           MATRIX hessian;

@@ -25,8 +25,8 @@
 using namespace std;
 
 // the resolution of the OpenGL window -- independent of the field resolution
-int xScreenRes = 800;
-int yScreenRes = 800;
+int xScreenRes = 700;
+int yScreenRes = 700;
 
 // Text for the title bar of the window
 string windowLabel("Pancake Simulator");
@@ -51,12 +51,14 @@ float zoom = 3.75;
 //REAL poissonsRatio = 0.0;
 REAL poissonsRatio = 0.45;
 //REAL youngsModulus = 1.0;
+//REAL youngsModulus = 2.0;
+REAL youngsModulus = 3.0;
 //REAL youngsModulus = 5.0;
-REAL youngsModulus = 10.0;
+//REAL youngsModulus = 10.0;
 //REAL youngsModulus = 25.0;
 //REAL youngsModulus = 50.0;
 REAL gravityConstant = -1.0;
-REAL eps = 0.02;
+REAL eps = 0.01;
 
 TRIANGLE_MESH* triangleMesh = NULL;
 TIMESTEPPER* integrator = NULL;

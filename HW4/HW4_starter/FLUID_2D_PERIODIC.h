@@ -26,9 +26,6 @@ public:
   virtual ~FLUID_2D_PERIODIC() {};
 
 protected:
-  // solve linear system with Gauss-Seidel iteration, with periodic boundaries
-  virtual void gaussSeidel(FIELD_2D& current, FIELD_2D& old);
-
   // advect field 'old' into 'current' using velocity field
   // 'xVelocity' and 'yVelocity' and periodic boundary conditions
   virtual void advect(FIELD_2D& current, FIELD_2D& old, FIELD_2D& xVelocity, FIELD_2D& yVelocity);

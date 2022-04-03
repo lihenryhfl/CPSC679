@@ -21,16 +21,17 @@ FLUID_2D::FLUID_2D(int xRes, int yRes, float dt) :
   _xVelocityOld(xRes, yRes),
   _yVelocity(xRes, yRes),
   _yVelocityOld(xRes, yRes),
+  _zVorticity(xRes, yRes),
   _vorticity(xRes, yRes),
   _residual(xRes, yRes),
   _direction(xRes, yRes),
   _q(xRes, yRes)
 {
-  //_vorticityEps = 2000.0f;
-  _vorticityEps = 2.0f;
-	float scaling = 64.0f / _xRes;
-	scaling = (scaling < 1.0f) ? 1.0f : scaling;
-	_vorticityEps /= scaling;
+  _vorticityEps = 4000.0f;
+  //_vorticityEps = 2.0f;
+	//float scaling = 64.0f / _xRes;
+	//scaling = (scaling < 1.0f) ? 1.0f : scaling;
+	//_vorticityEps /= scaling;
 }
 
 ///////////////////////////////////////////////////////////////////////
@@ -197,7 +198,8 @@ void FLUID_2D::addVorticity()
     for (int x = 1; x < _xRes - 1; x++) {
       float duydx = _yVelocity(x + 1, y) - _yVelocity(x - 1, y);
       float duxdy = _xVelocity(x, y + 1) - _xVelocity(x, y - 1);
-      _vorticity(x, y) = abs(0.5f * (duydx - duxdy) / N);
+      _zVorticity(x, y) = 0.5f * (duydx - duxdy) / N;
+      _vorticity(x, y) = abs(_zVorticity(x, y));
     }
   }
 
@@ -205,14 +207,14 @@ void FLUID_2D::addVorticity()
   for (int y = 1; y < _yRes - 1; y++) {
     for (int x = 1; x < _xRes - 1; x++) {
       dV[0] = 0.5f * (_vorticity(x + 1, y) - _vorticity(x - 1, y)) / N;
-      dV[1] = 0.5f * (_vorticity(x, y + 1) - _vorticity(x, y + 1)) / N;
+      dV[1] = 0.5f * (_vorticity(x, y + 1) - _vorticity(x, y - 1)) / N;
       float magnitude = sqrt(dV[0] * dV[0] + dV[1] * dV[1]);
 
       if (magnitude > 0.0f) {
         dV[0] /= magnitude;
         dV[1] /= magnitude;
-        _xVelocity(x, y) += (dV[1] * _vorticity(x, y)) * _vorticityEps / N;
-        _yVelocity(x, y) -= (dV[0] * _vorticity(x, y)) * _vorticityEps / N;
+        _xVelocity(x, y) += (dV[1] * _zVorticity(x, y)) * _vorticityEps / N;
+        _yVelocity(x, y) -= (dV[0] * _zVorticity(x, y)) * _vorticityEps / N;
       }
     }
   }
@@ -341,5 +343,21 @@ void FLUID_2D::solvePressure(FIELD_2D& field, FIELD_2D& b, int iterations)
     i++;
   }
   //cout << i << " iterations converged to " << maxR << ", deltaNew " << deltaNew << endl;
-  cout << i << " iterations, deltaNew " << deltaNew << endl;
+  //cout << i << " iterations, deltaNew " << deltaNew << endl;
+  cout << "deltaNew " << deltaNew << endl;
+}
+
+
+///////////////////////////////////////////////////////////////////////
+// solve linear system with Gauss-Seidel iteration
+///////////////////////////////////////////////////////////////////////
+void FLUID_2D::gaussSeidel(FIELD_2D& pressure, FIELD_2D& divergence, int iterations)
+{
+	for (int k = 0; k < 10; k++)
+  {
+    for (int y = 1; y < _yRes - 1; y++)
+      for (int x = 1; x < _xRes - 1; x++)
+			  pressure(x,y) = (divergence(x,y) + pressure(x-1,y) + pressure(x+1,y) + pressure(x,y-1) + pressure(x,y+1)) * 0.25;
+      // i.e.: p = d - Dp, where p is pressure, d is divergence, and D is the divergence operator
+	}
 }

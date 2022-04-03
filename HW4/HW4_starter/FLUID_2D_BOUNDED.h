@@ -28,9 +28,6 @@ public:
 private:
   void copyBoundary(FIELD_2D& field, bool copyX=true, bool copyY=true, int stepsAway=2);
 
-  // solve linear system with Gauss-Seidel iteration
-  virtual void gaussSeidel(FIELD_2D& current, FIELD_2D& old);
-
   // advect field 'old' into 'current' using velocity field
   // 'xVelocity' and 'yVelocity'
   virtual void advect(FIELD_2D& current, FIELD_2D& old, FIELD_2D& xVelocity, FIELD_2D& yVelocity);

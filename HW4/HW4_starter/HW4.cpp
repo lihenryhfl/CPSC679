@@ -28,7 +28,7 @@ int   windowY      = 512;
 bool  drawVelocity = false;
 int   res          = 128;
 float force        = 5.0;
-float source       = 10000.0;
+float source       = 100.0;
 
 // the fluid simulation object
 FLUID_2D* fluid;
@@ -97,7 +97,7 @@ void idleCallback()
   // add a packet of smoke at the bottom
   fluid->addSource();
 
-  //fluid->addVorticity();
+  fluid->addVorticity();
 
   // add a buoyancy force from the smoke packet
   fluid->addBuoyancy();

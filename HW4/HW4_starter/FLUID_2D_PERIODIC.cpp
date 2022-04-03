@@ -36,23 +36,6 @@ void FLUID_2D_PERIODIC::setPeriodicBoundary(FIELD_2D& field)
 }
 
 ///////////////////////////////////////////////////////////////////////
-// solve linear system with Gauss-Seidel iteration, with periodic
-// boundaries
-///////////////////////////////////////////////////////////////////////
-void FLUID_2D_PERIODIC::gaussSeidel(FIELD_2D& pressure, FIELD_2D& divergence)
-{
-	for (int k = 0; k < 10; k++)
-  {
-    for (int y = 1; y < _yRes - 1; y++)
-      for (int x = 1; x < _xRes - 1; x++)
-			  pressure(x,y) = (divergence(x,y) + pressure(x-1,y) + pressure(x+1,y) + pressure(x,y-1) + pressure(x,y+1)) * 0.25;
-      // i.e.: p = d - Dp, where p is pressure, d is divergence, and D is the divergence operator
-
-    setPeriodicBoundary(pressure);
-	}
-}
-
-///////////////////////////////////////////////////////////////////////
 // advect field 'old' into 'current' using velocity field
 // 'xVelocity' and 'yVelocity' and periodic boundary conditions
 ///////////////////////////////////////////////////////////////////////
@@ -130,8 +113,8 @@ void FLUID_2D_PERIODIC::project()
     }
   setPeriodicBoundary(divergence);
   setPeriodicBoundary(pressure);
-  //gaussSeidel(pressure, divergence);
-  solvePressure(pressure, divergence, 100);
+  gaussSeidel(pressure, divergence, 10);
+  //solvePressure(pressure, divergence, 10);
   setPeriodicBoundary(pressure);
 
   for (int y = 1; y < _yRes - 1; y++)

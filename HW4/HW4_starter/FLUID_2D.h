@@ -77,6 +77,7 @@ protected:
   FIELD_2D _xVelocityOld;
   FIELD_2D _yVelocity;
   FIELD_2D _yVelocityOld;
+  FIELD_2D _zVorticity;
   FIELD_2D _vorticity;
   FIELD_2D _residual;
   FIELD_2D _direction;
@@ -91,8 +92,8 @@ protected:
   // add the contents of 'source' to 'field'
   void addSource(FIELD_2D& field, FIELD_2D& source);
 
-  // solve linear system with Gauss-Seidel iteration, with periodic boundaries
-  virtual void gaussSeidel(FIELD_2D& current, FIELD_2D& old) = 0;
+  // solve linear system with Gauss-Seidel iteration
+  void gaussSeidel(FIELD_2D& pressure, FIELD_2D& divergence, int iterations=10);
 
   // advect field 'old' into 'current' using velocity field
   // 'xVelocity' and 'yVelocity' and periodic boundary conditions

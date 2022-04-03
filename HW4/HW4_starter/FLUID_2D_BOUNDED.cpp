@@ -51,23 +51,6 @@ void FLUID_2D_BOUNDED::copyBoundary(FIELD_2D& field, bool copyX, bool copyY, int
 }
 
 ///////////////////////////////////////////////////////////////////////
-// solve linear system with Gauss-Seidel iteration, with periodic
-// boundaries
-///////////////////////////////////////////////////////////////////////
-void FLUID_2D_BOUNDED::gaussSeidel(FIELD_2D& pressure, FIELD_2D& divergence)
-{
-	for (int k = 0; k < 10; k++)
-  {
-    for (int y = 1; y < _yRes - 1; y++)
-      for (int x = 1; x < _xRes - 1; x++)
-			  pressure(x,y) = (divergence(x,y) + pressure(x-1,y) + pressure(x+1,y) + pressure(x,y-1) + pressure(x,y+1)) * 0.25;
-      // i.e.: p = d - Dp, where p is pressure, d is divergence, and D is the divergence operator
-
-    //fillBoundary(pressure);
-	}
-}
-
-///////////////////////////////////////////////////////////////////////
 // advect field 'old' into 'current' using velocity field
 // 'xVelocity' and 'yVelocity' and periodic boundary conditions
 ///////////////////////////////////////////////////////////////////////
@@ -188,7 +171,7 @@ void FLUID_2D_BOUNDED::project()
       pressure(x,y) = 0;
     }
   copyBoundary(pressure, true, true, 1);
-  gaussSeidel(pressure, divergence);
+  gaussSeidel(pressure, divergence, 10);
   solvePressure(pressure, divergence, 10);
   copyBoundary(pressure, true, true, 1);
 
@@ -210,7 +193,7 @@ void FLUID_2D_BOUNDED::stepDensity()
   addSource(_density, _densityOld);
   swapFields(_density, _densityOld);
   advect(_density, _densityOld, _xVelocity, _yVelocity);
-  //fillBoundary(_density);
+  fillBoundary(_density);
 }
 
 ///////////////////////////////////////////////////////////////////////

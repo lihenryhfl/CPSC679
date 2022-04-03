@@ -63,7 +63,7 @@ void FLUID_2D_BOUNDED::gaussSeidel(FIELD_2D& pressure, FIELD_2D& divergence)
 			  pressure(x,y) = (divergence(x,y) + pressure(x-1,y) + pressure(x+1,y) + pressure(x,y-1) + pressure(x,y+1)) * 0.25;
       // i.e.: p = d - Dp, where p is pressure, d is divergence, and D is the divergence operator
 
-    fillBoundary(pressure);
+    //fillBoundary(pressure);
 	}
 }
 
@@ -73,11 +73,13 @@ void FLUID_2D_BOUNDED::gaussSeidel(FIELD_2D& pressure, FIELD_2D& divergence)
 ///////////////////////////////////////////////////////////////////////
 void FLUID_2D_BOUNDED::advect(FIELD_2D& current, FIELD_2D& old, FIELD_2D& xVelocity, FIELD_2D& yVelocity)
 {
+  copyBoundary(xVelocity, true, false, 1);
+  copyBoundary(yVelocity, false, true, 1);
   int N = _xRes - 2;
-	float dt0 = _dt * N; // convert velocity units to grid units (N grid cells = 1 model unit)
+  float dt0 = _dt * N; // convert velocity units to grid units (N grid cells = 1 model unit)
 
-  for (int y = 1; y < _yRes - 2; y++)
-    for (int x = 1; x < _xRes - 2; x++)
+  for (int y = 2; y < _yRes - 2; y++)
+    for (int x = 2; x < _xRes - 2; x++)
     {
       // trace backwards through the velocity field
       float velX = -dt0 * xVelocity(x, y);
@@ -160,8 +162,8 @@ void FLUID_2D_BOUNDED::advect(FIELD_2D& current, FIELD_2D& old, FIELD_2D& xVeloc
       float t0 = 1 - t1;
 
       // compute the final interpolation
-		  current(x,y) = s0 * (t0 * old(x0, y0) + t1 * old(x0, y1)) +
-					           s1 * (t0 * old(x1, y0) + t1 * old(x1, y1));
+      current(x,y) = s0 * (t0 * old(x0, y0) + t1 * old(x0, y1)) +
+                     s1 * (t0 * old(x1, y0) + t1 * old(x1, y1));
     }
 }
 
@@ -170,8 +172,10 @@ void FLUID_2D_BOUNDED::advect(FIELD_2D& current, FIELD_2D& old, FIELD_2D& xVeloc
 ///////////////////////////////////////////////////////////////////////
 void FLUID_2D_BOUNDED::project()
 {
-  //copyBoundary(_xVelocity, true, false);
-  //copyBoundary(_yVelocity, false, true);
+  // applying neumann condition
+  copyBoundary(_xVelocity, true, false);
+  copyBoundary(_yVelocity, false, true);
+
   int N = _xRes - 2;
   FIELD_2D& pressure = _xVelocityOld;
   FIELD_2D& divergence = _yVelocityOld;
@@ -183,10 +187,10 @@ void FLUID_2D_BOUNDED::project()
                                  _yVelocity(x, y + 1) - _yVelocity(x, y - 1)) / N;
       pressure(x,y) = 0;
     }
-  //copyBoundary(pressure, true, true, 1);
-  //gaussSeidel(pressure, divergence);
-  solvePressure(pressure, divergence, 100);
-  //copyBoundary(pressure, true, true, 1);
+  copyBoundary(pressure, true, true, 1);
+  gaussSeidel(pressure, divergence);
+  solvePressure(pressure, divergence, 10);
+  copyBoundary(pressure, true, true, 1);
 
   for (int y = 1; y < _yRes - 1; y++)
     for (int x = 1; x < _xRes - 1; x++)
@@ -195,8 +199,6 @@ void FLUID_2D_BOUNDED::project()
       _yVelocity(x, y) -= 0.5f * N * (pressure(x, y + 1) - pressure(x, y - 1));
     }
 
-  fillBoundary(_xVelocity, true, false);
-  fillBoundary(_xVelocity, false, true);
 }
 
 ///////////////////////////////////////////////////////////////////////
@@ -208,7 +210,7 @@ void FLUID_2D_BOUNDED::stepDensity()
   addSource(_density, _densityOld);
   swapFields(_density, _densityOld);
   advect(_density, _densityOld, _xVelocity, _yVelocity);
-  fillBoundary(_density);
+  //fillBoundary(_density);
 }
 
 ///////////////////////////////////////////////////////////////////////
@@ -217,23 +219,16 @@ void FLUID_2D_BOUNDED::stepDensity()
 void FLUID_2D_BOUNDED::stepVelocity()
 {
   // this adds mouse forces, they are stored in old
-  fillBoundary(_xVelocity, true, false);
-  fillBoundary(_xVelocityOld, true, false);
-  fillBoundary(_yVelocity, true, false);
-  fillBoundary(_yVelocityOld, true, false);
   addSource(_xVelocity, _xVelocityOld);
   addSource(_yVelocity, _yVelocityOld);
+
   project();
 
   swapFields(_xVelocityOld, _xVelocity);
   swapFields(_yVelocityOld, _yVelocity);
 
-  //copyBoundary(_xVelocity, true, false, 1);
-  //copyBoundary(_yVelocity, false, true, 1);
   advect(_xVelocity, _xVelocityOld, _xVelocityOld, _yVelocityOld);
-
   advect(_yVelocity, _yVelocityOld, _xVelocityOld, _yVelocityOld);
-  project();
 }
 
 ///////////////////////////////////////////////////////////////////////

@@ -183,6 +183,7 @@ void FLUID_2D::addBuoyancy()
   for (int y = 0; y < _yRes; y++)
     for (int x = 0; x < _xRes; x++)
       _yVelocity(x,y) += 0.001 * _density(x,y);
+      //_yVelocity(x,y) += 0.001 * _density(x,y);
 }
 
 ///////////////////////////////////////////////////////////////////////

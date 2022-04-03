@@ -28,7 +28,7 @@ public:
   void step();
 
   // user input density
-  void addDensity(int x, int y, float amount) { _densityOld(x,y) = amount; };
+  void addDensity(int x, int y, float amount) { _densityOld(x,y) += amount; };
 
   // user input force
   void addForce(int x, int y, float xForce, float yForce);

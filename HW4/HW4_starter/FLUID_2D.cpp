@@ -395,8 +395,10 @@ void FLUID_2D::copyBoundary(FIELD_2D& field, bool copyX, bool copyY, int stepsAw
 ///////////////////////////////////////////////////////////////////////
 void FLUID_2D::advect(float dt0, FIELD_2D& current, FIELD_2D& old, FIELD_2D& xVelocity, FIELD_2D& yVelocity)
 {
-  copyBoundary(xVelocity, true, false, 1);
-  copyBoundary(yVelocity, false, true, 1);
+  //copyBoundary(xVelocity, true, false, 1);
+  //copyBoundary(yVelocity, false, true, 1);
+  copyBoundary(xVelocity, false, true, 1);
+  copyBoundary(yVelocity, true, false, 1);
 
   int xRes = current.xRes();
   int yRes = current.yRes();
@@ -406,8 +408,8 @@ void FLUID_2D::advect(float dt0, FIELD_2D& current, FIELD_2D& old, FIELD_2D& xVe
 
   int N = xRes - 2;
 
-  for (int y = 2; y < yRes - 2; y++)
-    for (int x = 2; x < xRes - 2; x++)
+  for (int y = 1; y < yRes - 1; y++)
+    for (int x = 1; x < xRes - 1; x++)
     {
       // trace backwards through the velocity field
       float velX = -dt0 * xVelocity(x, y);
@@ -415,52 +417,12 @@ void FLUID_2D::advect(float dt0, FIELD_2D& current, FIELD_2D& old, FIELD_2D& xVe
       float tempX = x + velX;
       float tempY = y + velY;
 
-      // if relevant, keep track of times
-      float t2LW, t2RW, t2TW, t2BW, clippedTime;
-      if (abs(velX) > 0.0 || abs(velY) > 0.0) {
-        // calculate time to left/right/top/bottom walls, i.e. t2(L/R/T/B)W
-        t2LW = -(x - 1) / velX;
-        t2RW = (N - x) / velX;
-        t2TW = (N - y) / velY;
-        t2BW = -(y - 1) / velY;
-
-        // set time to "infinity" if it is negative (i.e. we are going the opposite
-        // direction and will never reach said wall)
-        t2LW = (t2LW >= 0.0) ? t2LW : 1e8;
-        t2RW = (t2RW >= 0.0) ? t2RW : 1e8;
-        t2TW = (t2TW >= 0.0) ? t2TW : 1e8;
-        t2BW = (t2BW >= 0.0) ? t2BW : 1e8;
-
-        // if there is a collision...
-        if (t2LW <= 1.0 || t2RW <= 1.0 || t2TW <= 1.0 || t2BW <= 1.0) {
-          //std::cout << "there may be a collision..." << std::endl;
-          // then check collision against all four walls
-          if (t2LW >= 0 && t2LW <= t2RW && t2LW <= t2TW && t2LW <= t2BW) {
-            // if we are closest to the left wall...
-            clippedTime = t2LW;
-            //std::cout << "left " << t2LW * velX << std::endl;
-          } else if (t2RW >= 0 && t2RW <= t2LW && t2RW <= t2TW && t2RW <= t2BW) {
-            // or right wall...
-            clippedTime = t2RW;
-            //std::cout << "right " << t2RW * velX << std::endl;
-          } else if (t2TW >= 0 && t2TW <= t2RW && t2TW <= t2LW && t2TW <= t2BW) {
-            // or top wall...
-            clippedTime = t2TW;
-            //std::cout << "top " << t2TW * velY << std::endl;
-          } else if (t2BW >= 0 && t2BW <= t2RW && t2BW <= t2TW && t2BW <= t2LW) {
-            // or bottom wall...
-            clippedTime = t2BW;
-            //std::cout << "bottom " << t2BW * velY << std::endl;
-          } else
-            assert (false);
-
-          tempX = x + clippedTime * velX;
-          tempY = y + clippedTime * velY;
-        }
-      }
+      if (tempX < 0.5) tempX = 0.5;
+      if (tempX > xRes - 1.5) tempX = xRes - 1.5;
+      if (tempY < 0.5) tempY = 0.5;
+      if (tempY > yRes - 1.5) tempY = yRes - 1.5;
 
       if ((tempX < 1 && tempX > N) || (tempY < 1 && tempY > N)) {
-        std::cout << "t2LW: " << t2LW << ", t2RW: " << t2RW << ", t2TW: " << t2TW << ", t2BW: " << t2BW << std::endl;
         std::cout << "N: " << N << ", velX: " << velX << ", velY: " << velY << std::endl;
         std::cout << "N: " << N << ", tempX: " << tempX << ", tempY: " << tempY << std::endl;
         assert (false);
@@ -473,7 +435,6 @@ void FLUID_2D::advect(float dt0, FIELD_2D& current, FIELD_2D& old, FIELD_2D& xVe
       int y1 = y0 + 1;
 
       if (x0 >= xRes || y0 >= yRes || x1 >= xRes || y1 >= yRes) {
-        std::cout << "t2LW: " << t2LW << ", t2RW: " << t2RW << ", t2TW: " << t2TW << ", t2BW: " << t2BW << std::endl;
         std::cout << "x: " << x << ", y: " << y << ", velX: " << velX << ", velY: " << velY << std::endl;
         std::cout << "N: " << N << ", tempX: " << tempX << ", tempY: " << tempY << std::endl;
         std::cout << "_xRes: " << _xRes << ", _yRes: " << _yRes <<
@@ -484,7 +445,7 @@ void FLUID_2D::advect(float dt0, FIELD_2D& current, FIELD_2D& old, FIELD_2D& xVe
       }
 
       // compute the interpolation weights
-		  float s1 = tempX - x0;
+      float s1 = tempX - x0;
       float s0 = 1 - s1;
       float t1 = tempY - y0;
       float t0 = 1 - t1;
@@ -494,3 +455,105 @@ void FLUID_2D::advect(float dt0, FIELD_2D& current, FIELD_2D& old, FIELD_2D& xVe
                      s1 * (t0 * old(x1, y0) + t1 * old(x1, y1));
     }
 }
+
+//void FLUID_2D::advect(float dt0, FIELD_2D& current, FIELD_2D& old, FIELD_2D& xVelocity, FIELD_2D& yVelocity)
+//{
+  //copyBoundary(xVelocity, true, false, 1);
+  //copyBoundary(yVelocity, false, true, 1);
+
+  //int xRes = current.xRes();
+  //int yRes = current.yRes();
+
+  //assert (xRes == old.xRes() && xRes == xVelocity.xRes() && xRes == yVelocity.xRes());
+  //assert (yRes == old.yRes() && yRes == xVelocity.yRes() && yRes == yVelocity.yRes());
+
+  //int N = xRes - 2;
+
+  //for (int y = 2; y < yRes - 2; y++)
+    //for (int x = 2; x < xRes - 2; x++)
+    //{
+      //// trace backwards through the velocity field
+      //float velX = -dt0 * xVelocity(x, y);
+      //float velY = -dt0 * yVelocity(x, y);
+      //float tempX = x + velX;
+      //float tempY = y + velY;
+
+      //// if relevant, keep track of times
+      //float t2LW, t2RW, t2TW, t2BW, clippedTime;
+      //if (abs(velX) > 0.0 || abs(velY) > 0.0) {
+        //// calculate time to left/right/top/bottom walls, i.e. t2(L/R/T/B)W
+        //t2LW = -(x - 1) / velX;
+        //t2RW = (N - x) / velX;
+        //t2TW = (N - y) / velY;
+        //t2BW = -(y - 1) / velY;
+
+        //// set time to "infinity" if it is negative (i.e. we are going the opposite
+        //// direction and will never reach said wall)
+        //t2LW = (t2LW >= 0.0) ? t2LW : 1e8;
+        //t2RW = (t2RW >= 0.0) ? t2RW : 1e8;
+        //t2TW = (t2TW >= 0.0) ? t2TW : 1e8;
+        //t2BW = (t2BW >= 0.0) ? t2BW : 1e8;
+
+        //// if there is a collision...
+        //if (t2LW <= 1.0 || t2RW <= 1.0 || t2TW <= 1.0 || t2BW <= 1.0) {
+          ////std::cout << "there may be a collision..." << std::endl;
+          //// then check collision against all four walls
+          //if (t2LW >= 0 && t2LW <= t2RW && t2LW <= t2TW && t2LW <= t2BW) {
+            //// if we are closest to the left wall...
+            //clippedTime = t2LW;
+            ////std::cout << "left " << t2LW * velX << std::endl;
+          //} else if (t2RW >= 0 && t2RW <= t2LW && t2RW <= t2TW && t2RW <= t2BW) {
+            //// or right wall...
+            //clippedTime = t2RW;
+            ////std::cout << "right " << t2RW * velX << std::endl;
+          //} else if (t2TW >= 0 && t2TW <= t2RW && t2TW <= t2LW && t2TW <= t2BW) {
+            //// or top wall...
+            //clippedTime = t2TW;
+            ////std::cout << "top " << t2TW * velY << std::endl;
+          //} else if (t2BW >= 0 && t2BW <= t2RW && t2BW <= t2TW && t2BW <= t2LW) {
+            //// or bottom wall...
+            //clippedTime = t2BW;
+            ////std::cout << "bottom " << t2BW * velY << std::endl;
+          //} else
+            //assert (false);
+
+          //tempX = x + clippedTime * velX;
+          //tempY = y + clippedTime * velY;
+        //}
+      //}
+
+      //if ((tempX < 1 && tempX > N) || (tempY < 1 && tempY > N)) {
+        //std::cout << "t2LW: " << t2LW << ", t2RW: " << t2RW << ", t2TW: " << t2TW << ", t2BW: " << t2BW << std::endl;
+        //std::cout << "N: " << N << ", velX: " << velX << ", velY: " << velY << std::endl;
+        //std::cout << "N: " << N << ", tempX: " << tempX << ", tempY: " << tempY << std::endl;
+        //assert (false);
+      //}
+
+      //// retrieve the coordinates of the grid cells to interpolate
+      //int x0 = (int) tempX;
+      //int y0 = (int) tempY;
+      //int x1 = x0 + 1;
+      //int y1 = y0 + 1;
+
+      //if (x0 >= xRes || y0 >= yRes || x1 >= xRes || y1 >= yRes) {
+        //std::cout << "t2LW: " << t2LW << ", t2RW: " << t2RW << ", t2TW: " << t2TW << ", t2BW: " << t2BW << std::endl;
+        //std::cout << "x: " << x << ", y: " << y << ", velX: " << velX << ", velY: " << velY << std::endl;
+        //std::cout << "N: " << N << ", tempX: " << tempX << ", tempY: " << tempY << std::endl;
+        //std::cout << "_xRes: " << _xRes << ", _yRes: " << _yRes <<
+          //", x0: " << x0 << ", y0: " << y0 <<
+          //", x1: " << x1 << ", y1: " << y1
+          //<< std::endl;
+        //assert (false);
+      //}
+
+      //// compute the interpolation weights
+      //float s1 = tempX - x0;
+      //float s0 = 1 - s1;
+      //float t1 = tempY - y0;
+      //float t0 = 1 - t1;
+
+      //// compute the final interpolation
+      //current(x,y) = s0 * (t0 * old(x0, y0) + t1 * old(x0, y1)) +
+                     //s1 * (t0 * old(x1, y0) + t1 * old(x1, y1));
+    //}
+//}

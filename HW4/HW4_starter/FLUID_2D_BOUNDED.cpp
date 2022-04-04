@@ -26,6 +26,10 @@ void FLUID_2D_BOUNDED::project()
   // applying neumann condition
   copyBoundary(_xVelocity, true, false);
   copyBoundary(_yVelocity, false, true);
+  //copyBoundary(_xVelocity, false, true);
+  //copyBoundary(_yVelocity, true, false);
+  //copyBoundary(_xVelocity, true, true);
+  //copyBoundary(_yVelocity, true, true);
 
   int N = _xRes - 2;
   FIELD_2D& pressure = _xVelocityOld;

@@ -23,7 +23,6 @@
 #define WTURBULENCE_H
 
 #include "FIELD_2D.h"
-using namespace BasicVector;
 class SIMPLE_PARSER;
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -33,19 +32,19 @@ class WTURBULENCE
 {
   public:
     // both config files can be NULL, altCfg might override values from noiseCfg
-    WTURBULENCE(int xResSm, int yResSm, int zResSm, int amplify);
+    WTURBULENCE(int xResSm, int yResSm, int amplify);
 
     /// destructor
     virtual ~WTURBULENCE();
 
     // step more readable version -- no rotation correction
-    void stepTurbulenceReadable(float dt, float* xvel, float* yvel, float* zvel, unsigned char *obstacles);
+    void stepTurbulenceReadable(float dt, FIELD_2D& xvel, FIELD_2D& yvel);
 
     // texcoord functions
-    void advectTextureCoordinates(float dtOrg, float* xvel, float* yvel, float* zvel);
+    void advectTextureCoordinates(float dtOrg, FIELD_2D& xvel, FIELD_2D& yvel);
     void resetTextureCoordinates();
 
-    void computeEnergy(float* xvel, float* yvel, float* zvel, unsigned char *obstacles);
+    void computeEnergy(FIELD_2D& xvel, FIELD_2D& yvel);
 
     // evaluate wavelet noise function
     void WVelocity(float* orgPos, float* out);
@@ -54,12 +53,9 @@ class WTURBULENCE
     inline FIELD_2D* getDensityBig() { return &_densityBig; }
     inline FIELD_2D* getArrayTcU() { return &_tcU; }
     inline FIELD_2D* getArrayTcV() { return &_tcV; }
-    inline FIELD_2D* getArrayTcW() { return &_tcW; }
     inline FIELD_2D* getArrayEigMin() { return &_eigMin; }
     inline FIELD_2D* getArrayEigMax() { return &_eigMax; }
 
-    inline FIELD_2D* getResSm() { return &_resSm; }
-    inline FIELD_2D* getResBig() { return &_resBig; }
     inline int getOctaves() { return _octaves; }
 
   protected:
@@ -86,7 +82,6 @@ class WTURBULENCE
     // original / small resolution
     int _xResSm;
     int _yResSm;
-    float[3] _resSm;
 
     FIELD_2D _densityBig;
     FIELD_2D _densityBigOld;

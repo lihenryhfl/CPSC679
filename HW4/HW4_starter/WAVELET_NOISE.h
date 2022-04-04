@@ -40,7 +40,7 @@
 #ifndef WAVELET_NOISE_H
 #define WAVELET_NOISE_H
 
-#include <MERSENNETWISTER.h>
+#include "MERSENNETWISTER.h"
 
 #define NOISE_TILE_SIZE 128
 static const int noiseTileSize = NOISE_TILE_SIZE;
@@ -284,8 +284,8 @@ static void generateTile(float* const noiseTileData, std::string filename) {
 //////////////////////////////////////////////////////////////////////////////////////////
 // x derivative of noise
 //////////////////////////////////////////////////////////////////////////////////////////
-static inline float WNoiseDx(Vec3 p, float* data) {
-  int i, c[2], mid[2], n = noiseTileSize;
+static inline float WNoiseDx(float* p, float* data) {
+  int c[2], mid[2], n = noiseTileSize;
   float w[2][3], t, result = 0;
 
   mid[0] = ceil(p[0] - 0.5);
@@ -318,7 +318,7 @@ static inline float WNoiseDx(Vec3 p, float* data) {
 // y derivative of noise
 //////////////////////////////////////////////////////////////////////////////////////////
 static inline float WNoiseDy(float* p, float* data) {
-  int i, c[2], mid[2], n=noiseTileSize;
+  int c[2], mid[2], n=noiseTileSize;
   float w[2][3], t, result =0;
 
   mid[0] = ceil(p[0] - 0.5);

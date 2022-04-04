@@ -23,6 +23,28 @@
 
 #include <stdlib.h>
 
+// for e.g. MSVC compiler...
+// some of these defines can be needed
+// for linux systems as well (e.g. FLT_MAX)
+#ifndef __FLT_MAX__
+#	ifdef FLT_MAX  // try to use it instead
+#		define __FLT_MAX__ FLT_MAX
+#	else // FLT_MAX
+#		define __FLT_MAX__ 3.402823466e+38f
+#	endif // FLT_MAX
+#endif // __FLT_MAX__
+#ifndef __DBL_MAX__
+#	ifdef DBL_MAX // try to use it instead
+#		define __DBL_MAX__ DBL_MAX
+#	else // DBL_MAX
+#		define __DBL_MAX__ 1.7976931348623158e+308
+#	endif // DBL_MAX
+#endif // __DBL_MAX__
+
+#ifndef FLT_MAX
+#define FLT_MAX __FLT_MAX__
+#endif
+
 //////////////////////////////////////////////////////////////////////
 // NT helper functions
 //////////////////////////////////////////////////////////////////////

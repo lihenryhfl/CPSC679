@@ -63,17 +63,17 @@ public:
   void solvePressure(FIELD_2D& field, FIELD_2D& b, int iterations=10);
 
   // copy grid cells from stepsAway cells away into boundary
-  void copyBoundary(FIELD_2D& field, bool copyX=true, bool copyY=true, int stepsAway=2);
+  static void copyBoundary(FIELD_2D& field, bool copyX=true, bool copyY=true, int stepsAway=2);
 
   // fill boundary with fillWith
-  void fillBoundary(FIELD_2D& field, bool fillX=true, bool fillY=true, float fillWith=0.0);
+  static void fillBoundary(FIELD_2D& field, bool fillX=true, bool fillY=true, float fillWith=0.0);
 
   // swap the pointers for fields 'left' and 'right'
-  void swapFields(FIELD_2D& left, FIELD_2D& right);
+  static void swapFields(FIELD_2D& left, FIELD_2D& right);
 
   // advect field 'old' into 'current' using velocity field
   // 'xVelocity' and 'yVelocity' and periodic boundary conditions
-  void advect(float dt0, FIELD_2D& current, FIELD_2D& old, FIELD_2D& xVelocity, FIELD_2D& yVelocity);
+  static void advect(float dt0, FIELD_2D& current, FIELD_2D& old, FIELD_2D& xVelocity, FIELD_2D& yVelocity);
 
   inline FIELD_2D& getDensity() {return _density; }
 

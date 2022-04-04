@@ -22,7 +22,7 @@
 #include "WTURBULENCE.h"
 #include "INTERPOLATE.h"
 #include "UTIL.h"
-#include <MERSENNETWISTER.h>
+#include "MERSENNETWISTER.h"
 #include "WAVELET_NOISE.h"
 #include "EIGENVALUE_HELPER.h"
 #include "LU_HELPER.h"
@@ -46,11 +46,10 @@ WTURBULENCE::WTURBULENCE(int xResSm, int yResSm, int amplify) :
   _tcV(xResSm, yResSm),
   _tcTemp(xResSm, yResSm),
   _energy(xResSm, yResSm),
-  _highFreqEnergy(xResSm, yResSm),
   _eigMin(xResSm, yResSm),
   _eigMax(xResSm, yResSm),
-  _noiseTile(noiseTileSize, noiseTileSize),
-  _resSm(xResSm, yResSm)
+  _highFreqEnergy(xResSm, yResSm),
+  _noiseTile(noiseTileSize, noiseTileSize)
 {
   // if noise magnitude is below this threshold, its contribution
   // is negilgible, so stop evaluating new octaves
@@ -77,8 +76,8 @@ WTURBULENCE::WTURBULENCE(int xResSm, int yResSm, int amplify) :
   _totalStepsBig = 0;
 
   // map all
-  const float dx = 1./(float)(_resSm[0]);
-  const float dy = 1./(float)(_resSm[1]);
+  const float dx = 1./(float)(_xResSm);
+  const float dy = 1./(float)(_yResSm);
   for (int y = 0; y < _yResSm; y++)
     for (int x = 0; x < _xResSm; x++)
     {
@@ -96,22 +95,6 @@ WTURBULENCE::WTURBULENCE(int xResSm, int yResSm, int amplify) :
 // destructor
 //////////////////////////////////////////////////////////////////////
 WTURBULENCE::~WTURBULENCE() {
-  delete[] _densityBig;
-  delete[] _densityBigOld;
-
-  delete[] _bigUx;
-  delete[] _bigUy;
-
-  delete[] _tcU;
-  delete[] _tcV;
-  delete[] _tcTemp;
-
-  delete[] _eigMin;
-  delete[] _eigMax;
-  delete[] _noiseTile;
-
-  delete[] _energy;
-  delete[] _highFreqEnergy;
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -127,9 +110,9 @@ static float minDx(int x, int y, FIELD_2D& input)
   // get grid values
   float center = input(x, y);
   float left  = (x <= 1)    ? FLT_MAX : input(x - 1, y);
-  float right = (x >= maxx) ? FLT_MAX : input(x + 1, y);
+  float right = (x >= N) ? FLT_MAX : input(x + 1, y);
 
-  const float dx = xRes;
+  const float dx = input.xRes();
 
   // get all the derivative estimates
   float dLeft   = (x <= 1)     ? FLT_MAX : (center - left) * dx;
@@ -159,9 +142,9 @@ static float minDy(int x, int y, FIELD_2D& input)
   const int N = input.yRes() - 2;
 
   // get grid values
-  float center = input[index];
+  float center = input(x, y);
   float down  = (y <= 1) ? FLT_MAX : input(x, y - 1);
-  float up = (y >= maxy) ? FLT_MAX : input(x, y + 1);
+  float up = (y >= N) ? FLT_MAX : input(x, y + 1);
 
   const float dx = input.yRes(); // only for square domains
 
@@ -189,11 +172,11 @@ void WTURBULENCE::advectTextureCoordinates (float dtOrg, FIELD_2D& xvel, FIELD_2
   // advection
   FLUID_2D_BOUNDED::swapFields(_tcTemp, _tcU);
   FLUID_2D_BOUNDED::copyBoundary(_tcTemp, true, true, 1);
-  FLUID_2D_BOUNDED::advect(_tcU, _tcTemp, xvel, yvel);
+  FLUID_2D_BOUNDED::advect(dtOrg, _tcU, _tcTemp, xvel, yvel);
 
   FLUID_2D_BOUNDED::swapFields(_tcTemp, _tcV);
   FLUID_2D_BOUNDED::copyBoundary(_tcTemp, true, true, 1);
-  FLUID_2D_BOUNDED::advect(_tcV, _tcTemp, xvel, yvel);
+  FLUID_2D_BOUNDED::advect(dtOrg, _tcV, _tcTemp, xvel, yvel);
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -230,11 +213,10 @@ void WTURBULENCE::computeEigenvalues() {
       }
       else
       {
-        _eigMax[index] = 10.0f;
-        _eigMin[index] = 0.1;
+        _eigMax(x, y) = 10.0f;
+        _eigMin(x, y) = 0.1;
       }
     }
-  }
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -248,8 +230,8 @@ void WTURBULENCE::resetTextureCoordinates()
 
   // standard reset
   int resets = 0;
-  const float dx = 1./(float)(_resSm[0]);
-  const float dy = 1./(float)(_resSm[1]);
+  const float dx = 1./(float)(_xResSm);
+  const float dy = 1./(float)(_yResSm);
 
   for (int y = 1; y < _yResSm - 1; y++)
     for (int x = 1; x < _xResSm - 1; x++)
@@ -298,12 +280,12 @@ void WTURBULENCE::decomposeEnergy()
 // compute velocity from energies
 // for wavelet decomposition
 //////////////////////////////////////////////////////////////////////
-void WTURBULENCE::computeEnergy(FLUID_2D& xvel, FLUID_2D& yvel)
+void WTURBULENCE::computeEnergy(FIELD_2D& xvel, FIELD_2D& yvel)
 {
   // compute everywhere
-  for (int y = 0; x < _yResSm; y++)
+  for (int y = 0; y < _yResSm; y++)
     for (int x = 0; x < _xResSm; x++)
-      _energy[x] = 0.5f * (xvel(x, y) * xvel(x, y) + yvel(x, y) * yvel(x, y));
+      _energy(x, y) = 0.5f * (xvel(x, y) * xvel(x, y) + yvel(x, y) * yvel(x, y));
 
   FLUID_2D_BOUNDED::copyBoundary(_energy, true, true, 1);
 }
@@ -320,7 +302,7 @@ void WTURBULENCE::WVelocity(float* orgPos, float* out)
 //////////////////////////////////////////////////////////////////////
 // perform an actual noise advection step
 //////////////////////////////////////////////////////////////////////
-void WTURBULENCE::stepTurbulenceReadable(float dtOrg, FLUID_2D& xvel, FLUID_2D& yvel)
+void WTURBULENCE::stepTurbulenceReadable(float dtOrg, FIELD_2D& xvel, FIELD_2D& yvel)
 {
   // enlarge timestep to match grid
   const float dt = dtOrg * _amplify;
@@ -341,7 +323,6 @@ void WTURBULENCE::stepTurbulenceReadable(float dtOrg, FLUID_2D& xvel, FLUID_2D& 
     for (int x = 1; x < _xResBig - 1; x++)
     {
       // get unit position for both fine and coarse grid
-      const int pos[2] = {x, y};
       const int posSm[2] = {(int) x * invAmp, (int) y * invAmp};
 
       // get a linearly interpolated velocity and texcoords
@@ -349,12 +330,12 @@ void WTURBULENCE::stepTurbulenceReadable(float dtOrg, FLUID_2D& xvel, FLUID_2D& 
       float vel[2] = {};
       float uv[2] = {};
       INTERPOLATE::lerp2dVec(xvel, yvel, posSm[0], posSm[1], vel);
-      INTERPOLATE::lerp3dVec(_tcU, _tcV, posSm[0], posSm[1], uv);
+      INTERPOLATE::lerp2dVec(_tcU, _tcV, posSm[0], posSm[1], uv);
 
-      // multiply the texture coordinate by _resSm so that turbulence
-      // synthesis begins at the first octave that the coarse grid
-      // cannot capture
-      float texCoord[2] = {uv[0] * _resSm[0],  uv[1] * _resSm[1]};
+      // multiply the texture coordinate by _xResSm and _yResSm
+      // so that turbulence synthesis begins at the first octave
+      // that the coarse grid cannot capture
+      float texCoord[2] = {uv[0] * _xResSm,  uv[1] * _yResSm};
 
       // retrieve wavelet energy at highest frequency
       float energy = INTERPOLATE::lerp2d(
@@ -367,8 +348,8 @@ void WTURBULENCE::stepTurbulenceReadable(float dtOrg, FLUID_2D& xvel, FLUID_2D& 
       // add noise to velocity, but only if the turbulence is
       // sufficiently undeformed, and the energy is large enough
       // to make a difference
-      const bool addNoise = _eigMax[indexSmall] < 2. &&
-                            _eigMin[indexSmall] > 0.5;
+      const bool addNoise = _eigMax(posSm[0], posSm[1]) < 2. &&
+                            _eigMin(posSm[0], posSm[1]) > 0.5;
       if (addNoise && amplitude > _cullingThreshold) {
         // base amplitude for octave 0
         float amplitudeScaled = amplitude;
@@ -428,7 +409,7 @@ void WTURBULENCE::stepTurbulenceReadable(float dtOrg, FLUID_2D& xvel, FLUID_2D& 
   } // substep
 
   // wipe the density borders
-  FLUID_3D::fillBoundary(_densityBig);
+  FLUID_2D::fillBoundary(_densityBig);
 
   // reset texture coordinates now in preparation for next timestep
   // Shouldn't do this before generating the noise because then the

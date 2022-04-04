@@ -21,7 +21,6 @@
 #define INTERPOLATE_H
 
 #include <iostream>
-#include <VEC3.h>
 
 namespace INTERPOLATE {
 
@@ -55,172 +54,64 @@ static inline float lerp(float* field, float x, float y, int res) {
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////
-// 3d linear interpolation
+// interpolate a vector from 2 fields, in 2D
 //////////////////////////////////////////////////////////////////////////////////////////
-static inline float lerp3d(float* field, float x, float y, float z,  int xres, int yres, int zres) {
-	// clamp pos to grid boundaries
-	if (x < 0.5) x = 0.5;
-	if (x > xres - 1.5) x = xres - 1.5;
-	if (y < 0.5) y = 0.5;
-	if (y > yres - 1.5) y = yres - 1.5;
-	if (z < 0.5) z = 0.5;
-	if (z > zres - 1.5) z = zres - 1.5;
+static inline void lerp2dVec(FIELD_2D& field1, FIELD_2D& field2, float x, float y, float* out) {
+  int xres = field1.xRes();
+  int yres = field1.yRes();
+  assert (xres == field2.xRes() && yres == field2.yRes());
+  // clamp pos to grid boundaries
+  if (x < 0.5) x = 0.5;
+  if (x > xres - 1.5) x = xres - 1.5;
+  if (y < 0.5) y = 0.5;
+  if (y > yres - 1.5) y = yres - 1.5;
 
-	// locate neighbors to interpolate
-	const int x0 = (int)x;
-	const int x1 = x0 + 1;
-	const int y0 = (int)y;
-	const int y1 = y0 + 1;
-	const int z0 = (int)z;
-	const int z1 = z0 + 1;
+  // locate neighbors to interpolate
+  const int x0 = (int) x;
+  const int x1 = x0 + 1;
+  const int y0 = (int) y;
+  const int y1 = y0 + 1;
 
-	// get interpolation weights
-	const float s1 = x - (float)x0;
-	const float s0 = 1.0f - s1;
-	const float t1 = y - (float)y0;
-	const float t0 = 1.0f - t1;
-	const float u1 = z - (float)z0;
-	const float u0 = 1.0f - u1;
+  // get interpolation weights
+  const float s1 = x - (float)x0;
+  const float s0 = 1.0f - s1;
+  const float t1 = y - (float)y0;
+  const float t0 = 1.0f - t1;
 
-	const int slabSize = xres*yres;
-	const int i000 = x0 + y0 * xres + z0 * slabSize;
-	const int i010 = x0 + y1 * xres + z0 * slabSize;
-	const int i100 = x1 + y0 * xres + z0 * slabSize;
-	const int i110 = x1 + y1 * xres + z0 * slabSize;
-	const int i001 = x0 + y0 * xres + z1 * slabSize;
-	const int i011 = x0 + y1 * xres + z1 * slabSize;
-	const int i101 = x1 + y0 * xres + z1 * slabSize;
-	const int i111 = x1 + y1 * xres + z1 * slabSize;
+  out[0] = s0 * (t0 * field1(x0, y0) + t1 * field1(x0, y1)) +
+    s1 * (t0 * field1(x1, y0) + t1 * field1(x1, y1));
 
-	// interpolate (indices could be computed once)
-	return ( u0 * (s0 * (t0 * field[i000] +
-		t1 * field[i010]) +
-		s1 * (t0 * field[i100] +
-		t1 * field[i110])) +
-		u1 * (s0 * (t0 * field[i001] +
-		t1 * field[i011]) +
-		s1 * (t0 * field[i101] +
-		t1 * field[i111])) );
+  out[1] = s0 * (t0 * field2(x0, y0) + t1 * field2(x0, y1)) +
+    s1 * (t0 * field2(x1, y0) + t1 * field2(x1, y1));
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////
-// convert field entries of type T to floats, then interpolate
+// interpolate a vector from 2 fields, in 2D
 //////////////////////////////////////////////////////////////////////////////////////////
-template <class T>
-static inline float lerp3dToFloat(T* field1,
-		float x, float y, float z,  int xres, int yres, int zres) {
-	// clamp pos to grid boundaries
-	if (x < 0.5) x = 0.5;
-	if (x > xres - 1.5) x = xres - 1.5;
-	if (y < 0.5) y = 0.5;
-	if (y > yres - 1.5) y = yres - 1.5;
-	if (z < 0.5) z = 0.5;
-	if (z > zres - 1.5) z = zres - 1.5;
+static inline float lerp2d(FIELD_2D& field, float x, float y) {
+  int xres = field.xRes();
+  int yres = field.yRes();
 
-	// locate neighbors to interpolate
-	const int x0 = (int)x;
-	const int x1 = x0 + 1;
-	const int y0 = (int)y;
-	const int y1 = y0 + 1;
-	const int z0 = (int)z;
-	const int z1 = z0 + 1;
+  // clamp pos to grid boundaries
+  if (x < 0.5) x = 0.5;
+  if (x > xres - 1.5) x = xres - 1.5;
+  if (y < 0.5) y = 0.5;
+  if (y > yres - 1.5) y = yres - 1.5;
 
-	// get interpolation weights
-	const float s1 = x - (float)x0;
-	const float s0 = 1.0f - s1;
-	const float t1 = y - (float)y0;
-	const float t0 = 1.0f - t1;
-	const float u1 = z - (float)z0;
-	const float u0 = 1.0f - u1;
+  // locate neighbors to interpolate
+  const int x0 = (int) x;
+  const int x1 = x0 + 1;
+  const int y0 = (int) y;
+  const int y1 = y0 + 1;
 
-	const int slabSize = xres*yres;
-	const int i000 = x0 + y0 * xres + z0 * slabSize;
-	const int i010 = x0 + y1 * xres + z0 * slabSize;
-	const int i100 = x1 + y0 * xres + z0 * slabSize;
-	const int i110 = x1 + y1 * xres + z0 * slabSize;
-	const int i001 = x0 + y0 * xres + z1 * slabSize;
-	const int i011 = x0 + y1 * xres + z1 * slabSize;
-	const int i101 = x1 + y0 * xres + z1 * slabSize;
-	const int i111 = x1 + y1 * xres + z1 * slabSize;
+  // get interpolation weights
+  const float s1 = x - (float)x0;
+  const float s0 = 1.0f - s1;
+  const float t1 = y - (float)y0;
+  const float t0 = 1.0f - t1;
 
-	// interpolate (indices could be computed once)
-	return (float)(
-			( u0 * (s0 * (t0 * (float)field1[i000] +
-				t1 * (float)field1[i010]) +
-				s1 * (t0 * (float)field1[i100] +
-				t1 * (float)field1[i110])) +
-				u1 * (s0 * (t0 * (float)field1[i001] +
-				t1 * (float)field1[i011]) +
-				s1 * (t0 * (float)field1[i101] +
-				t1 * (float)field1[i111])) ) );
-}
-
-//////////////////////////////////////////////////////////////////////////////////////////
-// interpolate a vector from 3 fields
-//////////////////////////////////////////////////////////////////////////////////////////
-static inline Vec3 lerp3dVec(float* field1, float* field2, float* field3,
-		float x, float y, float z,  int xres, int yres, int zres) {
-	// clamp pos to grid boundaries
-	if (x < 0.5) x = 0.5;
-	if (x > xres - 1.5) x = xres - 1.5;
-	if (y < 0.5) y = 0.5;
-	if (y > yres - 1.5) y = yres - 1.5;
-	if (z < 0.5) z = 0.5;
-	if (z > zres - 1.5) z = zres - 1.5;
-
-	// locate neighbors to interpolate
-	const int x0 = (int)x;
-	const int x1 = x0 + 1;
-	const int y0 = (int)y;
-	const int y1 = y0 + 1;
-	const int z0 = (int)z;
-	const int z1 = z0 + 1;
-
-	// get interpolation weights
-	const float s1 = x - (float)x0;
-	const float s0 = 1.0f - s1;
-	const float t1 = y - (float)y0;
-	const float t0 = 1.0f - t1;
-	const float u1 = z - (float)z0;
-	const float u0 = 1.0f - u1;
-
-	const int slabSize = xres*yres;
-	const int i000 = x0 + y0 * xres + z0 * slabSize;
-	const int i010 = x0 + y1 * xres + z0 * slabSize;
-	const int i100 = x1 + y0 * xres + z0 * slabSize;
-	const int i110 = x1 + y1 * xres + z0 * slabSize;
-	const int i001 = x0 + y0 * xres + z1 * slabSize;
-	const int i011 = x0 + y1 * xres + z1 * slabSize;
-	const int i101 = x1 + y0 * xres + z1 * slabSize;
-	const int i111 = x1 + y1 * xres + z1 * slabSize;
-
-	// interpolate (indices could be computed once)
-	return Vec3(
-			( u0 * (s0 * (t0 * field1[i000] +
-				t1 * field1[i010]) +
-				s1 * (t0 * field1[i100] +
-				t1 * field1[i110])) +
-				u1 * (s0 * (t0 * field1[i001] +
-				t1 * field1[i011]) +
-				s1 * (t0 * field1[i101] +
-				t1 * field1[i111])) ) ,
-			( u0 * (s0 * (t0 * field2[i000] +
-				t1 * field2[i010]) +
-				s1 * (t0 * field2[i100] +
-				t1 * field2[i110])) +
-				u1 * (s0 * (t0 * field2[i001] +
-				t1 * field2[i011]) +
-				s1 * (t0 * field2[i101] +
-				t1 * field2[i111])) ) ,
-			( u0 * (s0 * (t0 * field3[i000] +
-				t1 * field3[i010]) +
-				s1 * (t0 * field3[i100] +
-				t1 * field3[i110])) +
-				u1 * (s0 * (t0 * field3[i001] +
-				t1 * field3[i011]) +
-				s1 * (t0 * field3[i101] +
-				t1 * field3[i111])) )
-			);
+  return s0 * (t0 * field(x0, y0) + t1 * field(x0, y1)) +
+    s1 * (t0 * field(x1, y0) + t1 * field(x1, y1));
 }
 
 };

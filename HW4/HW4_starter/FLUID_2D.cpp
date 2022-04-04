@@ -437,7 +437,7 @@ void FLUID_2D::advect(float dt0, FIELD_2D& current, FIELD_2D& old, FIELD_2D& xVe
       if (x0 >= xRes || y0 >= yRes || x1 >= xRes || y1 >= yRes) {
         std::cout << "x: " << x << ", y: " << y << ", velX: " << velX << ", velY: " << velY << std::endl;
         std::cout << "N: " << N << ", tempX: " << tempX << ", tempY: " << tempY << std::endl;
-        std::cout << "_xRes: " << _xRes << ", _yRes: " << _yRes <<
+        std::cout << "_xRes: " << xRes << ", _yRes: " << yRes <<
           ", x0: " << x0 << ", y0: " << y0 <<
           ", x1: " << x1 << ", y1: " << y1
           << std::endl;

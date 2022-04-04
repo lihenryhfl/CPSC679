@@ -33,6 +33,7 @@ FLUID_2D::FLUID_2D(int xRes, int yRes, float dt) :
 	//_vorticityEps /= scaling;
   _N = _xRes - 2;
   _dt0 = _dt * _N;
+  _wTurbulence = new WTURBULENCE(_xRes, _yRes, 2);
 }
 
 ///////////////////////////////////////////////////////////////////////
@@ -154,6 +155,7 @@ void FLUID_2D::step()
 {
   stepVelocity();
   stepDensity();
+  _wTurbulence->stepTurbulenceReadable(_dt0, _xVelocity, _yVelocity);
 }
 
 ///////////////////////////////////////////////////////////////////////

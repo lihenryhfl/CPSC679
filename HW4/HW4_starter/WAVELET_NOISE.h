@@ -42,12 +42,14 @@
 
 #include "MERSENNETWISTER.h"
 
-#define NOISE_TILE_SIZE 128
+//#define NOISE_TILE_SIZE 128
+#define NOISE_TILE_SIZE 256
 static const int noiseTileSize = NOISE_TILE_SIZE;
 
 // warning - noiseTileSize has to be 128^3!
+#define modFast256(x) ((x) & 255)
 #define modFast128(x) ((x) & 127)
-#define modFast64(x)  ((x) & 63)
+//#define modFast64(x)  ((x) & 63)
 #define DOWNCOEFFS 0.000334f,-0.001528f, 0.000410f, 0.003545f,-0.000938f,-0.008233f, 0.002172f, 0.019120f, \
                   -0.005040f,-0.044412f, 0.011655f, 0.103311f,-0.025936f,-0.243780f, 0.033979f, 0.655340f, \
                    0.655340f, 0.033979f,-0.243780f,-0.025936f, 0.103311f, 0.011655f,-0.044412f,-0.005040f, \
@@ -63,7 +65,7 @@ static void downsampleX(float *from, float *to, int n){
   for (int i = 0; i < n / 2; i++) {
     to[i] = 0;
     for (int k = 2 * i - 16; k < 2 * i + 16; k++)
-      to[i] += a[k - 2 * i] * from[modFast128(k)];
+      to[i] += a[k - 2 * i] * from[modFast256(k)];
   }
 }
 static void downsampleY(float *from, float *to, int n){
@@ -73,7 +75,7 @@ static void downsampleY(float *from, float *to, int n){
   for (int i = 0; i < n / 2; i++) {
     to[i * n] = 0;
     for (int k = 2 * i - 16; k < 2 * i + 16; k++)
-      to[i * n] += a[k - 2 * i] * from[modFast128(k) * n];
+      to[i * n] += a[k - 2 * i] * from[modFast256(k) * n];
   }
 }
 
@@ -126,7 +128,7 @@ static void upsampleX(float *from, float *to, int n) {
   for (int i = 0; i < n; i++) {
     to[i] = 0;
     for (int k = i / 2; k <= i / 2 + 1; k++)
-      to[i] += p[i - 2 * k] * from[modFast64(k)];
+      to[i] += p[i - 2 * k] * from[modFast128(k)];
   }
 }
 static void upsampleY(float *from, float *to, int n) {
@@ -135,7 +137,7 @@ static void upsampleY(float *from, float *to, int n) {
   for (int i = 0; i < n; i++) {
     to[i * n] = 0;
     for (int k = i / 2; k <= i / 2 + 1; k++)
-      to[i * n] += p[i - 2 * k] * from[modFast64(k) * n];
+      to[i * n] += p[i - 2 * k] * from[modFast128(k) * n];
   }
 }
 
@@ -265,7 +267,7 @@ static void generateTile(float* const noiseTileData, std::string filename) {
   int icnt=0;
   for (int ix = 0; ix < n; ix++)
     for (int iy = 0; iy < n; iy++) {
-      temp13[icnt] = noise3[modFast128(ix+offset) + modFast128(iy+offset)*n];
+      temp13[icnt] = noise3[modFast256(ix+offset) + modFast256(iy+offset)*n];
       icnt++;
     }
 
@@ -305,9 +307,9 @@ static inline float WNoiseDx(float* p, float* data) {
     for (int x = -1; x <=1; x++)
     {
       float weight = 1.0f;
-      c[0] = modFast128(mid[0] + x);
+      c[0] = modFast256(mid[0] + x);
       weight *= w[0][x+1];
-      c[1] = modFast128(mid[1] + y);
+      c[1] = modFast256(mid[1] + y);
       weight *= w[1][y+1];
       result += weight * data[c[1]*n+c[0]];
     }
@@ -338,9 +340,9 @@ static inline float WNoiseDy(float* p, float* data) {
     for (int x = -1; x <=1; x++)
     {
       float weight = 1.0f;
-      c[0] = modFast128(mid[0] + x);
+      c[0] = modFast256(mid[0] + x);
       weight *= w[0][x+1];
-      c[1] = modFast128(mid[1] + y);
+      c[1] = modFast256(mid[1] + y);
       weight *= w[1][y+1];
       result += weight * data[c[1]*n+c[0]];
     }

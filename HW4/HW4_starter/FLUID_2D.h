@@ -17,6 +17,7 @@
 #include <GL/glu.h>
 #endif
 #include "FIELD_2D.h"
+#include "WTURBULENCE.h"
 
 class FLUID_2D {
 
@@ -86,6 +87,7 @@ protected:
   float _dt;
   float _dt0;
   float _vorticityEps;
+  WTURBULENCE* _wTurbulence;
 
   // simulation variables
   FIELD_2D _density;

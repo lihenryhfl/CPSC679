@@ -22,14 +22,14 @@
 class FLUID_2D {
 
 public:
-  FLUID_2D(int xRes, int yRes, float dt);
+  FLUID_2D(int xRes, int yRes, float dt, bool WT = false);
   virtual ~FLUID_2D() {};
 
   // timestep the fluid simulation
   void step();
 
   // user input density
-  void addDensity(int x, int y, float amount) { _densityOld(x,y) += amount; };
+  void addDensity(int x, int y, float amount);
 
   // user input force
   void addForce(int x, int y, float xForce, float yForce);
@@ -80,6 +80,7 @@ public:
 
 protected:
   // simulation constants
+  bool _WT;
   int _xRes;
   int _yRes;
   int _N;
@@ -116,6 +117,9 @@ protected:
 
   // step velocity field using periodic boundaries
   virtual void stepVelocity() = 0;
+
+  // helper functions
+  static void _addSource(int xRes, int yRes, FIELD_2D* density);
 };
 
 #endif

@@ -180,9 +180,12 @@ int main(int argc, char ** argv)
 	glutIdleFunc(idleCallback);
 	glutDisplayFunc(displayCallback);
 
-  fluid = new FLUID_2D_BOUNDED(res, res, 0.1);
+  bool WT = (argc > 1 && strcmp(argv[1], "WT") == 0) ? true : false;
+  cout << "WT: " << WT << endl;
+  WT = true;
+  fluid = new FLUID_2D_BOUNDED(res, res, 0.1, WT);
   //FIELD_2D& density = fluid->getDensity();
-  //fluid = new FLUID_2D_PERIODIC(res, res, 0.1);
+  //fluid = new FLUID_2D_PERIODIC(res, res, 0.1, WT);
 
 	glutMainLoop ();
 

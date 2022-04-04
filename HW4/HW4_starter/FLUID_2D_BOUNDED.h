@@ -22,7 +22,7 @@
 class FLUID_2D_BOUNDED : public FLUID_2D {
 
 public:
-  FLUID_2D_BOUNDED(int xRes, int yRes, float dt);
+  FLUID_2D_BOUNDED(int xRes, int yRes, float dt, bool WT);
   virtual ~FLUID_2D_BOUNDED() {};
 
 private:

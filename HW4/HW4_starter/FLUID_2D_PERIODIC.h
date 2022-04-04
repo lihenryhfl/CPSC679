@@ -22,7 +22,7 @@
 class FLUID_2D_PERIODIC : public FLUID_2D {
 
 public:
-  FLUID_2D_PERIODIC(int xRes, int yRes, float dt);
+  FLUID_2D_PERIODIC(int xRes, int yRes, float dt, bool WT);
   virtual ~FLUID_2D_PERIODIC() {};
 
   // advect field 'old' into 'current' using velocity field

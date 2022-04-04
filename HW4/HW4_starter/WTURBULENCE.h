@@ -56,6 +56,8 @@ class WTURBULENCE
     inline FIELD_2D* getArrayEigMin() { return &_eigMin; }
     inline FIELD_2D* getArrayEigMax() { return &_eigMax; }
 
+    inline int getXResBig() { return _xResBig; }
+    inline int getYResBig() { return _yResBig; }
     inline int getOctaves() { return _octaves; }
 
   protected:

@@ -13,7 +13,7 @@
 ///////////////////////////////////////////////////////////////////////
 // Constructor / Destructor
 ///////////////////////////////////////////////////////////////////////
-FLUID_2D::FLUID_2D(int xRes, int yRes, float dt) :
+FLUID_2D::FLUID_2D(int xRes, int yRes, float dt, bool WT) :
   _xRes(xRes), _yRes(yRes), _dt(dt),
   _density(xRes, yRes),
   _densityOld(xRes, yRes),
@@ -27,13 +27,15 @@ FLUID_2D::FLUID_2D(int xRes, int yRes, float dt) :
   _direction(xRes, yRes),
   _q(xRes, yRes)
 {
-  _vorticityEps = 4000.0f;
+  _vorticityEps = 1000.0f;
 	//float scaling = 64.0f / _xRes;
 	//scaling = (scaling < 1.0f) ? 1.0f : scaling;
 	//_vorticityEps /= scaling;
   _N = _xRes - 2;
   _dt0 = _dt * _N;
-  _wTurbulence = new WTURBULENCE(_xRes, _yRes, 2);
+  _WT = WT;
+  if (_WT)
+    _wTurbulence = new WTURBULENCE(_xRes, _yRes, 2);
 }
 
 ///////////////////////////////////////////////////////////////////////
@@ -97,26 +99,37 @@ void FLUID_2D::clearOlds()
 ///////////////////////////////////////////////////////////////////////
 void FLUID_2D::drawDensity()
 {
-	float h = 1.0f / (_xRes - 2);
+  glBegin(GL_QUADS);
+  int xRes, yRes;
+  FIELD_2D* density;
+  if (_WT) {
+    xRes = _wTurbulence->getXResBig();
+    yRes = _wTurbulence->getYResBig();
+    density = _wTurbulence->getDensityBig();
+  } else {
+    xRes = _xRes;
+    yRes = _yRes;
+    density = &_density;
+  }
+  float h = 1.0f / (xRes - 2);
 
-	glBegin(GL_QUADS);
-		for (int i = 1; i < _xRes - 1; i++)
+    for (int i = 1; i < xRes - 1; i++)
     {
-			float x = (i - 0.5f) * h;
-			for (int j = 1; j < _yRes - 1; j++)
+      float x = (i - 0.5f) * h;
+      for (int j = 1; j < yRes - 1; j++)
       {
-				float y = (j - 0.5f) * h;
+        float y = (j - 0.5f) * h;
 
-  		  float density = _density(i,j);
+        float tmp = (*density)(i, j);
 
-				glColor3f(density, density, density);
+        glColor3f(tmp, tmp, tmp);
         glVertex2f(x, y);
         glVertex2f(x + h, y);
         glVertex2f(x + h, y + h);
         glVertex2f(x, y + h);
-			}
-		}
-	glEnd();
+      }
+    }
+  glEnd();
 }
 
 ///////////////////////////////////////////////////////////////////////
@@ -155,18 +168,19 @@ void FLUID_2D::step()
 {
   stepVelocity();
   stepDensity();
-  _wTurbulence->stepTurbulenceReadable(_dt0, _xVelocity, _yVelocity);
+  if (_WT)
+    _wTurbulence->stepTurbulenceReadable(_dt0, _xVelocity, _yVelocity);
 }
 
 ///////////////////////////////////////////////////////////////////////
 // add a smoke packet to the center
 ///////////////////////////////////////////////////////////////////////
-void FLUID_2D::addSource()
+void FLUID_2D::_addSource(int xRes, int yRes, FIELD_2D* density)
 {
-  float dx = 1.0 / _xRes;
-  float dy = 1.0 / _yRes;
-  for (int y = 0; y < _yRes; y++)
-    for (int x = 0; x < _xRes; x++)
+  float dx = 1.0 / xRes;
+  float dy = 1.0 / yRes;
+  for (int y = 0; y < yRes; y++)
+    for (int x = 0; x < xRes; x++)
     {
       float xReal = x * dx;
       float yReal = y * dy;
@@ -174,9 +188,40 @@ void FLUID_2D::addSource()
       if (xReal > 0.475 && xReal < 0.525 &&
           yReal > 0.1 && yReal < 0.15)
       {
-        _density(x,y) = 1.0;
+        (*density)(x, y) = 1.0;
       }
     }
+}
+
+void FLUID_2D::addSource()
+{
+  _addSource(_xRes, _yRes, &_density);
+
+  if (_WT) {
+    int xRes = _wTurbulence->getXResBig();
+    int yRes = _wTurbulence->getYResBig();
+    FIELD_2D* density = _wTurbulence->getDensityBig();
+    _addSource(xRes, yRes, density);
+  }
+}
+
+
+///////////////////////////////////////////////////////////////////////
+// add some smoke here
+///////////////////////////////////////////////////////////////////////
+void FLUID_2D::addDensity(int x, int y, float amount)
+{
+  _densityOld(x, y) += amount;
+
+  if (_WT) {
+    int xRes = _wTurbulence->getXResBig();
+    int yRes = _wTurbulence->getYResBig();
+    FIELD_2D* density = _wTurbulence->getDensityBig();
+    (*density)(2 * x, 2 * y) += amount;
+    (*density)(2 * x + 1, 2 * y) += amount;
+    (*density)(2 * x, 2 * y + 1) += amount;
+    (*density)(2 * x + 1, 2 * y + 1) += amount;
+  }
 }
 
 ///////////////////////////////////////////////////////////////////////

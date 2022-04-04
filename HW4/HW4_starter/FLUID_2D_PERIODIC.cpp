@@ -11,7 +11,7 @@
 ///////////////////////////////////////////////////////////////////////
 // Constructor / Destructor
 ///////////////////////////////////////////////////////////////////////
-FLUID_2D_PERIODIC::FLUID_2D_PERIODIC(int xRes, int yRes, float dt) :
+FLUID_2D_PERIODIC::FLUID_2D_PERIODIC(int xRes, int yRes, float dt, bool WT) :
   FLUID_2D(xRes, yRes, dt)
 {
 }

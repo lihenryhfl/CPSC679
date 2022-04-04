@@ -13,8 +13,8 @@
 ///////////////////////////////////////////////////////////////////////
 // Constructor / Destructor
 ///////////////////////////////////////////////////////////////////////
-FLUID_2D_BOUNDED::FLUID_2D_BOUNDED(int xRes, int yRes, float dt) :
-  FLUID_2D(xRes, yRes, dt)
+FLUID_2D_BOUNDED::FLUID_2D_BOUNDED(int xRes, int yRes, float dt, bool WT) :
+  FLUID_2D(xRes, yRes, dt, WT)
 {
 }
 

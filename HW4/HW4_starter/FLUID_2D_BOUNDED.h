@@ -26,12 +26,6 @@ public:
   virtual ~FLUID_2D_BOUNDED() {};
 
 private:
-  void copyBoundary(FIELD_2D& field, bool copyX=true, bool copyY=true, int stepsAway=2);
-
-  // advect field 'old' into 'current' using velocity field
-  // 'xVelocity' and 'yVelocity'
-  virtual void advect(FIELD_2D& current, FIELD_2D& old, FIELD_2D& xVelocity, FIELD_2D& yVelocity);
-
   // perform projection
   virtual void project();
 

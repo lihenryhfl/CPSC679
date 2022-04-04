@@ -62,14 +62,29 @@ public:
 
   void solvePressure(FIELD_2D& field, FIELD_2D& b, int iterations=10);
 
-  void stepTurbulence(float dtOrg, FIELD_2D& xVelocity, FIELD_2D& yVelocity);
+  // copy grid cells from stepsAway cells away into boundary
+  void copyBoundary(FIELD_2D& field, bool copyX=true, bool copyY=true, int stepsAway=2);
+
+  // fill boundary with fillWith
+  void fillBoundary(FIELD_2D& field, bool fillX=true, bool fillY=true, float fillWith=0.0);
+
+  // swap the pointers for fields 'left' and 'right'
+  void swapFields(FIELD_2D& left, FIELD_2D& right);
+
+  // advect field 'old' into 'current' using velocity field
+  // 'xVelocity' and 'yVelocity' and periodic boundary conditions
+  void advect(float dt0, FIELD_2D& current, FIELD_2D& old, FIELD_2D& xVelocity, FIELD_2D& yVelocity);
+
+  inline FIELD_2D& getDensity() {return _density; }
 
 protected:
   // simulation constants
   int _xRes;
   int _yRes;
+  int _N;
   int _iterations;
   float _dt;
+  float _dt0;
   float _vorticityEps;
 
   // simulation variables
@@ -85,21 +100,11 @@ protected:
   FIELD_2D _direction;
   FIELD_2D _q;
 
-  // fill boundary with fillWith
-  void fillBoundary(FIELD_2D& field, bool fillX=true, bool fillY=true, float fillWith=0.0);
-
-  // swap the pointers for fields 'left' and 'right'
-  void swapFields(FIELD_2D& left, FIELD_2D& right);
-
   // add the contents of 'source' to 'field'
   void addSource(FIELD_2D& field, FIELD_2D& source);
 
   // solve linear system with Gauss-Seidel iteration
   void gaussSeidel(FIELD_2D& pressure, FIELD_2D& divergence, int iterations=10);
-
-  // advect field 'old' into 'current' using velocity field
-  // 'xVelocity' and 'yVelocity' and periodic boundary conditions
-  virtual void advect(FIELD_2D& current, FIELD_2D& old, FIELD_2D& xVelocity, FIELD_2D& yVelocity) = 0;
 
   // perform projection using periodic boundary conditions
   virtual void project() = 0;

@@ -25,11 +25,11 @@ public:
   FLUID_2D_PERIODIC(int xRes, int yRes, float dt);
   virtual ~FLUID_2D_PERIODIC() {};
 
-protected:
   // advect field 'old' into 'current' using velocity field
   // 'xVelocity' and 'yVelocity' and periodic boundary conditions
-  virtual void advect(FIELD_2D& current, FIELD_2D& old, FIELD_2D& xVelocity, FIELD_2D& yVelocity);
+  void advect(float dt0, FIELD_2D& current, FIELD_2D& old, FIELD_2D& xVelocity, FIELD_2D& yVelocity);
 
+protected:
   // perform projection using periodic boundary conditions
   virtual void project();
 

@@ -39,10 +39,9 @@ void FLUID_2D_PERIODIC::setPeriodicBoundary(FIELD_2D& field)
 // advect field 'old' into 'current' using velocity field
 // 'xVelocity' and 'yVelocity' and periodic boundary conditions
 ///////////////////////////////////////////////////////////////////////
-void FLUID_2D_PERIODIC::advect(FIELD_2D& current, FIELD_2D& old, FIELD_2D& xVelocity, FIELD_2D& yVelocity)
+void FLUID_2D_PERIODIC::advect(float dt0, FIELD_2D& current, FIELD_2D& old, FIELD_2D& xVelocity, FIELD_2D& yVelocity)
 {
   int N = _xRes - 2;
-	float dt0 = _dt * N;
 
   for (int y = 1; y < _yRes - 1; y++)
     for (int x = 1; x < _xRes - 1; x++)
@@ -135,7 +134,7 @@ void FLUID_2D_PERIODIC::stepDensity()
 {
   addSource(_density, _densityOld);
   swapFields(_density, _densityOld);
-  advect(_density, _densityOld, _xVelocity, _yVelocity);
+  advect(_dt0, _density, _densityOld, _xVelocity, _yVelocity);
   setPeriodicBoundary(_density);
 }
 
@@ -151,10 +150,10 @@ void FLUID_2D_PERIODIC::stepVelocity()
 	swapFields(_xVelocityOld, _xVelocity);
   swapFields(_yVelocityOld, _yVelocity);
 
-	advect(_xVelocity, _xVelocityOld, _xVelocityOld, _yVelocityOld);
+	advect(_dt0, _xVelocity, _xVelocityOld, _xVelocityOld, _yVelocityOld);
   setPeriodicBoundary(_xVelocity);
 
-  advect(_yVelocity, _yVelocityOld, _xVelocityOld, _yVelocityOld);
+  advect(_dt0, _yVelocity, _yVelocityOld, _xVelocityOld, _yVelocityOld);
   setPeriodicBoundary(_yVelocity);
 	project();
 }

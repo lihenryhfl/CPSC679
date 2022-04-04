@@ -181,6 +181,7 @@ int main(int argc, char ** argv)
 	glutDisplayFunc(displayCallback);
 
   fluid = new FLUID_2D_BOUNDED(res, res, 0.1);
+  //FIELD_2D& density = fluid->getDensity();
   //fluid = new FLUID_2D_PERIODIC(res, res, 0.1);
 
 	glutMainLoop ();

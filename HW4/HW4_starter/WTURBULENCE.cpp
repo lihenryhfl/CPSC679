@@ -37,7 +37,7 @@ static const float persistence = 0.56123f;
 //////////////////////////////////////////////////////////////////////
 // constructor
 //////////////////////////////////////////////////////////////////////
-WTURBULENCE::WTURBULENCE(int xResSm, int yResSm, int zResSm, int amplify) :
+WTURBULENCE::WTURBULENCE(int xResSm, int yResSm, int amplify) :
   _densityBig(xResSm * amplify, yResSm * amplify),
   _densityBigOld(xResSm * amplify, yResSm * amplify),
   _bigUx(xResSm * amplify, yResSm * amplify),
@@ -275,32 +275,27 @@ void WTURBULENCE::decomposeEnergy()
   // as an additional temp array
 
   // downsample input
-  downsampleXNeumann(_highFreqEnergy, _energy, _xResSm, _yResSm, _zResSm);
-  downsampleYNeumann(_tcTemp, _highFreqEnergy, _xResSm, _yResSm, _zResSm);
-  downsampleZNeumann(_highFreqEnergy, _tcTemp, _xResSm, _yResSm, _zResSm);
+  downsampleXNeumann(_highFreqEnergy.data(), _energy.data(), _xResSm, _yResSm);
+  downsampleYNeumann(_tcTemp.data(), _highFreqEnergy.data(), _xResSm, _yResSm);
 
   // upsample input
-  upsampleZNeumann(_tcTemp, _highFreqEnergy, _xResSm, _yResSm, _zResSm);
-  upsampleYNeumann(_highFreqEnergy, _tcTemp, _xResSm, _yResSm, _zResSm);
-  upsampleXNeumann(_tcTemp, _highFreqEnergy, _xResSm, _yResSm, _zResSm);
+  upsampleYNeumann(_highFreqEnergy.data(), _tcTemp.data(), _xResSm, _yResSm);
+  upsampleXNeumann(_tcTemp.data(), _highFreqEnergy.data(), _xResSm, _yResSm);
 
   // subtract the down and upsampled field from the original field --
   // what should be left over is solely the high frequency component
-	int index = 0;
-  for (int z = 0; z < _zResSm; z++)
-    for (int y = 0; y < _yResSm; y++) {
-      for (int x = 0; x < _xResSm; x++, index++) {
-        // brute force reset of boundaries
-        if(z >= _zResSm - 1 || x >= _xResSm - 1 || y >= _yResSm - 1 || z <= 0 || y <= 0 || x <= 0)
-          _highFreqEnergy[index] = 0.;
-        else
-          _highFreqEnergy[index] = _energy[index] - _tcTemp[index];
-    }
+  for (int y = 0; y < _yResSm; y++)
+    for (int x = 0; x < _xResSm; x++) {
+      // brute force reset of boundaries
+      if(x >= _xResSm - 1 || y >= _yResSm - 1 || y <= 0 || x <= 0)
+        _highFreqEnergy(x, y) = 0.;
+      else
+        _highFreqEnergy(x, y) = _energy(x, y) - _tcTemp(x, y);
   }
 }
 
 //////////////////////////////////////////////////////////////////////
-// compute velocity from energies and march into obstacles
+// compute velocity from energies
 // for wavelet decomposition
 //////////////////////////////////////////////////////////////////////
 void WTURBULENCE::computeEnergy(FLUID_2D& xvel, FLUID_2D& yvel)
@@ -318,25 +313,8 @@ void WTURBULENCE::computeEnergy(FLUID_2D& xvel, FLUID_2D& yvel)
 //////////////////////////////////////////////////////////////////////////////////////////
 void WTURBULENCE::WVelocity(float* orgPos, float* out)
 {
-  // arbitrarily offset evaluation points
-  const Vec3 p1 = orgPos + Vec3(NOISE_TILE_SIZE/2,0,0);
-  const Vec3 p2 = orgPos + Vec3(0,NOISE_TILE_SIZE/2,0);
-  const Vec3 p3 = orgPos + Vec3(0,0,NOISE_TILE_SIZE/2);
-
-  const float f1y = WNoiseDy(p1, _noiseTile);
-  const float f1z = WNoiseDz(p1, _noiseTile);
-
-  const float f2x = WNoiseDx(p2, _noiseTile);
-  const float f2z = WNoiseDz(p2, _noiseTile);
-
-  const float f3x = WNoiseDx(p3, _noiseTile);
-  const float f3y = WNoiseDy(p3, _noiseTile);
-
-  Vec3 ret = Vec3(
-      f3y - f2z,
-      f1z - f3x,
-      f2x - f1y );
-  return ret;
+  out[0] = WNoiseDy(orgPos, _noiseTile.data());
+  out[1] = -WNoiseDx(orgPos, _noiseTile.data());
 }
 
 //////////////////////////////////////////////////////////////////////

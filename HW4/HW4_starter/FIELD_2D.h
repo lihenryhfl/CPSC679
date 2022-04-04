@@ -12,7 +12,7 @@ class FIELD_2D {
 public:
   // construction and destruction
   FIELD_2D();
-  FIELD_2D(int xRes, int yRes); 
+  FIELD_2D(int xRes, int yRes);
   virtual ~FIELD_2D();
 
   // (x,y) accessor
@@ -50,7 +50,7 @@ public:
 
   // squared sum of entries
   float squaredSum() const;
-  
+
   // dot product with another field
   float dotProduct(FIELD_2D& field) const;
 

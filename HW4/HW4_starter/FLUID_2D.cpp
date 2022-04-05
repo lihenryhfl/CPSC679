@@ -98,23 +98,25 @@ void FLUID_2D::clearOlds()
 void FLUID_2D::drawDensity()
 {
   glBegin(GL_QUADS);
-  int xRes, yRes;
+  int xRes, yRes, offset;
   FIELD_2D* density;
   if (_WT) {
     xRes = _wTurbulence->getXResBig();
     yRes = _wTurbulence->getYResBig();
+    offset = 2;
     density = _wTurbulence->getDensityBig();
   } else {
     xRes = _xRes;
     yRes = _yRes;
+    offset = 1;
     density = &_density;
   }
-  float h = 1.0f / (xRes - 2);
+  float h = 1.0f / (xRes - 2 * offset);
 
-    for (int i = 1; i < xRes - 1; i++)
+    for (int i = offset; i < xRes - offset; i++)
     {
       float x = (i - 0.5f) * h;
-      for (int j = 1; j < yRes - 1; j++)
+      for (int j = offset; j < yRes - offset; j++)
       {
         float y = (j - 0.5f) * h;
 

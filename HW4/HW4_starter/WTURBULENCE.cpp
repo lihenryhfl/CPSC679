@@ -396,8 +396,10 @@ void WTURBULENCE::stepTurbulenceReadable(float dtOrg, FIELD_2D& xvel, FIELD_2D& 
   const float dtSubdiv = dt / (float)totalSubsteps;
 
   // set boundaries of big velocity grid
-  FLUID_2D_BOUNDED::fillBoundary(_bigUx, true, false);
-  FLUID_2D_BOUNDED::fillBoundary(_bigUy, false, true);
+  //FLUID_2D_BOUNDED::fillBoundary(_bigUx, true, false);
+  //FLUID_2D_BOUNDED::fillBoundary(_bigUy, false, true);
+  FLUID_2D_BOUNDED::fillBoundary(_bigUx, true, true);
+  FLUID_2D_BOUNDED::fillBoundary(_bigUy, true, true);
 
   // do advection, with substepping if necessary
   for(int substep = 0; substep < totalSubsteps; substep++)

@@ -29,6 +29,8 @@ bool  drawVelocity = false;
 int   res          = 128;
 float force        = 5.0;
 float source       = 100.0;
+bool  WT           = false;
+bool  VC           = false;
 
 // the fluid simulation object
 FLUID_2D* fluid;
@@ -93,11 +95,12 @@ void reshapeCallback(int width, int height)
 ///////////////////////////////////////////////////////////////////////////////
 void idleCallback()
 {
-  //fluid->wipeBoundaries();
+  fluid->wipeBoundaries();
   // add a packet of smoke at the bottom
   fluid->addSource();
 
-  fluid->addVorticity();
+  if (VC)
+    fluid->addVorticity();
 
   // add a buoyancy force from the smoke packet
   fluid->addBuoyancy();
@@ -180,12 +183,20 @@ int main(int argc, char ** argv)
 	glutIdleFunc(idleCallback);
 	glutDisplayFunc(displayCallback);
 
-  bool WT = (argc > 1 && strcmp(argv[1], "WT") == 0) ? true : false;
+  if (argc > 1) {
+    if (strcmp(argv[1], "WT") == 0) {
+      WT = true;
+      VC = true;
+      fluid = new FLUID_2D_BOUNDED(res, res, 0.1, WT);
+    } else if (strcmp(argv[1], "VORTICITY") == 0) {
+      VC = true;
+      fluid = new FLUID_2D_BOUNDED(res, res, 0.1, WT);
+    } else if (strcmp(argv[1], "NEUMANN") == 0)  {
+      fluid = new FLUID_2D_BOUNDED(res, res, 0.1, WT);
+    }
+  } else
+    fluid = new FLUID_2D_PERIODIC(res, res, 0.1, WT);
   cout << "WT: " << WT << endl;
-  WT = true;
-  fluid = new FLUID_2D_BOUNDED(res, res, 0.1, WT);
-  //FIELD_2D& density = fluid->getDensity();
-  //fluid = new FLUID_2D_PERIODIC(res, res, 0.1, WT);
 
 	glutMainLoop ();
 

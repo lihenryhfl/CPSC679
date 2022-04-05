@@ -27,10 +27,8 @@ FLUID_2D::FLUID_2D(int xRes, int yRes, float dt, bool WT) :
   _direction(xRes, yRes),
   _q(xRes, yRes)
 {
-  _vorticityEps = 1000.0f;
-	//float scaling = 64.0f / _xRes;
-	//scaling = (scaling < 1.0f) ? 1.0f : scaling;
-	//_vorticityEps /= scaling;
+  _vorticityEps = 2000.0f;
+  //_vorticityEps = 1280.0f;
   _N = _xRes - 2;
   _dt0 = _dt * _N;
   _WT = WT;

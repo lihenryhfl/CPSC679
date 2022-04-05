@@ -9,10 +9,11 @@ LDFLAGS    = ${LDFLAGS_COMMON}
 EXECUTABLE = HW4
 
 SOURCES    = HW4.cpp \
-	     FIELD_2D.cpp \
-	     FLUID_2D.cpp \
-	     FLUID_2D_BOUNDED.cpp \
-	     FLUID_2D_PERIODIC.cpp
+			 FIELD_2D.cpp \
+			 FLUID_2D.cpp \
+			 FLUID_2D_BOUNDED.cpp \
+			 FLUID_2D_PERIODIC.cpp \
+			 WTURBULENCE.cpp
 
 OBJECTS    = $(SOURCES:.cpp=.o)
 

@@ -59,7 +59,7 @@ WTURBULENCE::WTURBULENCE(int xResSm, int yResSm, int amplify) :
   _amplify = amplify;
 
   // manually adjust the overall amount of turbulence
-  _strength = 5.;
+  _strength = 2.;
 
   // add the corresponding octaves of noise
   _octaves = log((float)_amplify) / log(2.0f);

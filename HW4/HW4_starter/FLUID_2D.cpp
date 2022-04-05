@@ -27,13 +27,14 @@ FLUID_2D::FLUID_2D(int xRes, int yRes, float dt, bool WT) :
   _direction(xRes, yRes),
   _q(xRes, yRes)
 {
-  _vorticityEps = 2000.0f;
-  //_vorticityEps = 1280.0f;
+  _vorticityEps = 4000.0f;
+  //_vorticityEps = 800.0f;
   _N = _xRes - 2;
   _dt0 = _dt * _N;
   _WT = WT;
+  _amplitude = 2;
   if (_WT)
-    _wTurbulence = new WTURBULENCE(_xRes, _yRes, 2);
+    _wTurbulence = new WTURBULENCE(_xRes, _yRes, _amplitude);
 }
 
 ///////////////////////////////////////////////////////////////////////
@@ -98,17 +99,17 @@ void FLUID_2D::clearOlds()
 void FLUID_2D::drawDensity()
 {
   glBegin(GL_QUADS);
-  int xRes, yRes, offset;
+  int xRes, yRes;
+  int offset = 1;
   FIELD_2D* density;
   if (_WT) {
     xRes = _wTurbulence->getXResBig();
     yRes = _wTurbulence->getYResBig();
-    offset = 2;
+    offset *= _amplitude;
     density = _wTurbulence->getDensityBig();
   } else {
     xRes = _xRes;
     yRes = _yRes;
-    offset = 1;
     density = &_density;
   }
   float h = 1.0f / (xRes - 2 * offset);
@@ -169,7 +170,7 @@ void FLUID_2D::step()
   stepVelocity();
   stepDensity();
   if (_WT)
-    _wTurbulence->stepTurbulenceReadable(_dt0, _xVelocity, _yVelocity);
+    _wTurbulence->stepTurbulenceReadable(_dt0 * _amplitude, _xVelocity, _yVelocity);
 }
 
 ///////////////////////////////////////////////////////////////////////

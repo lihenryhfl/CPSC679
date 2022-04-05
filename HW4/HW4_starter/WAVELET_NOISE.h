@@ -224,7 +224,7 @@ static void saveTile(float* const noiseTileData, std::string filename)
 //////////////////////////////////////////////////////////////////////////////////////////
 static void generateTile(float* const noiseTileData, std::string filename) {
   // if a tile already exists, just use that
-  if (loadTile(noiseTileData, filename)) return;
+  //if (loadTile(noiseTileData, filename)) return;
 
   const int n = noiseTileSize;
   const int n2 = n*n;

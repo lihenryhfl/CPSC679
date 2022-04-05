@@ -85,6 +85,7 @@ protected:
   int _yRes;
   int _N;
   int _iterations;
+  int _amplitude;
   float _dt;
   float _dt0;
   float _vorticityEps;

@@ -27,7 +27,7 @@ FLUID_2D::FLUID_2D(int xRes, int yRes, float dt, bool WT) :
   _direction(xRes, yRes),
   _q(xRes, yRes)
 {
-  _vorticityEps = 4000.0f;
+  _vorticityEps = 3000.0f;
   //_vorticityEps = 800.0f;
   _N = _xRes - 2;
   _dt0 = _dt * _N;
@@ -242,19 +242,13 @@ void FLUID_2D::addBuoyancy()
 void FLUID_2D::addVorticity()
 {
   int N = _xRes - 2;
-  // calculate vorticity
+  float dV[2];
   for (int y = 1; y < _yRes - 1; y++) {
     for (int x = 1; x < _xRes - 1; x++) {
       float duydx = _yVelocity(x + 1, y) - _yVelocity(x - 1, y);
       float duxdy = _xVelocity(x, y + 1) - _xVelocity(x, y - 1);
-      _zVorticity(x, y) = 0.5f * (duydx - duxdy) / N;
+      _zVorticity(x, y) = -0.5f * (duydx - duxdy) / N;
       _vorticity(x, y) = abs(_zVorticity(x, y));
-    }
-  }
-
-  float dV[2];
-  for (int y = 1; y < _yRes - 1; y++) {
-    for (int x = 1; x < _xRes - 1; x++) {
       dV[0] = 0.5f * (_vorticity(x + 1, y) - _vorticity(x - 1, y)) / N;
       dV[1] = 0.5f * (_vorticity(x, y + 1) - _vorticity(x, y - 1)) / N;
       float magnitude = sqrt(dV[0] * dV[0] + dV[1] * dV[1]);
@@ -262,8 +256,8 @@ void FLUID_2D::addVorticity()
       if (magnitude > 0.0f) {
         dV[0] /= magnitude;
         dV[1] /= magnitude;
-        _xVelocity(x, y) += (dV[1] * _zVorticity(x, y)) * _vorticityEps / N;
-        _yVelocity(x, y) -= (dV[0] * _zVorticity(x, y)) * _vorticityEps / N;
+        _xVelocity(x, y) -= (dV[1] * _zVorticity(x, y)) * _vorticityEps / N;
+        _yVelocity(x, y) += (dV[0] * _zVorticity(x, y)) * _vorticityEps / N;
       }
     }
   }

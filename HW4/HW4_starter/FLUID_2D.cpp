@@ -27,7 +27,7 @@ FLUID_2D::FLUID_2D(int xRes, int yRes, float dt, bool WT) :
   _direction(xRes, yRes),
   _q(xRes, yRes)
 {
-  _vorticityEps = 3000.0f;
+  _vorticityEps = 2000.0f;
   //_vorticityEps = 800.0f;
   _N = _xRes - 2;
   _dt0 = _dt * _N;
@@ -170,7 +170,7 @@ void FLUID_2D::step()
   stepVelocity();
   stepDensity();
   if (_WT)
-    _wTurbulence->stepTurbulenceReadable(_dt0 * _amplitude, _xVelocity, _yVelocity);
+    _wTurbulence->stepTurbulenceReadable(_dt0 * _amplitude + 1, _xVelocity, _yVelocity);
 }
 
 ///////////////////////////////////////////////////////////////////////

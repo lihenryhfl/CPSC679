@@ -54,8 +54,6 @@ void FLUID_2D_BOUNDED::project()
       _yVelocity(x, y) -= 0.5f * N * (pressure(x, y + 1) - pressure(x, y - 1));
     }
 
-  copyBoundary(_xVelocity, true, false);
-  copyBoundary(_yVelocity, false, true);
 }
 
 ///////////////////////////////////////////////////////////////////////
